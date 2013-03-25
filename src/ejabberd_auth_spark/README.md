@@ -1,8 +1,8 @@
-mod_oauth2 
+ejabberd_auth_spark 
 ==========
 
-Act as an oauth2 client to authenticate against a oauth2 procotol server.
-Unfornately the oauth2 protocol server is not starndard complaint
+Act as an server-to-server authentication client against an internal authentication server restful api.
+Most of the standard call from ejabberd_auth is irrelevant because the processes are done through mainsite.
 
 Author: Edward Tsang <>
 
@@ -17,8 +17,13 @@ Integeration into Ejabberd
 ---------------------------
 
 Add in your ejabberd.cfg
-{listen, [  ...
-          {5280, ejabberd_http,    [http_poll, web_admin, {request_handlers , [{["openid"],mod_openid }]}]} ,
+{auth_method, spark}.
+{spark_auth_endpoint, "your restful authentication end point")}.  %%endpoint is environment specific
+{spark_application_id, 1234},  %%1234 is example application id,
+{spark_client_secrete,"Your client digest"}. %%the client digest is for server to server communication
+{rest_client_timeout_in_sec, 15}. %% 15 sec default timeout .. configurable
+{rest_call_retry_attempt, 0}.  %% retry rest call NOT USED right now for future
+
 
 Then your open id is    http://server.org:5280/openid/user@server.org
 Hopelifully it should be possible to have more nice-looking urls.
