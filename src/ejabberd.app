@@ -17,6 +17,7 @@
 	     ejabberd_auth,
 	     ejabberd_auth_external,
 	     ejabberd_auth_internal,
+             ejabberd_auth_spark,
 	     ejabberd_auth_ldap,
 	     ejabberd_auth_odbc,
 	     ejabberd_auth_pam,
@@ -143,7 +144,7 @@
 		ejabberd_offline,
 		random_generator
 	       ]},
-  {applications, [kernel, stdlib]},
+  {applications, [kernel, stdlib, crypto, inets, public_key, ssl]},
   {env, []},
   {mod, {ejabberd_app, []}}]}.
 
