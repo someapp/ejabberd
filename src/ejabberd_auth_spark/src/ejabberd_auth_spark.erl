@@ -55,6 +55,8 @@
 
 -define(SPARKAUTH_URI, "http://api....").
 -define(CURRENT_FUNCTION_NAME(), element(2, element(2, process_info(self(), current_function)))).
+-define(AUTHENTICATED, 200).
+-define(DefaultType, json).
 
 
 %%====================================================================
@@ -95,7 +97,15 @@ check_password(User, Server, Password, _Digest, _DigestGen) ->
 -spec check_password(User::string(), Host::string(), Password::string()) -> false .
 check_password(User, Host, Password) ->
     ?MYDEBUG("~p with user ~p host ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
-    RETVAL = false,
+    RETVAL = 
+         case authenticate_request(Host, User, Password)of
+              {ok, authenticated} -> true;
+              {error, Error} -> 
+                        ?INFO("Authenication error ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, Error}]),
+                        false;
+              Error -> ?ERROR("Authentication Call Error ~p ~p~n ", [?CURRENT_FUNCTION_NAME(), {error, Error}]),);
+                        false; 
+        end;
     ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
@@ -189,7 +199,7 @@ store_type() ->
 %% Internal functions
 %%====================================================================
 %% @private
-%% doc get the authentication endpoint rest client to talk to
+%% @doc get the authentication endpoint rest client to talk to
 get_spark_auth_service_config(Host, TokenName) ->
     case ejabberd_config:get_local_option({TokenName, Host}) of
 	undefined -> {error, not_found};
@@ -211,7 +221,7 @@ get_spark_client_secrete(Host) ->
        HasValue -> string_to_integer(HasValue);
         _ -> 0 %% don't retry by default
     end. 
- 
+%% @doc get the rest client time out value in seconds from config file 
 -spec get_rest_client_timeout_in_sec(Host::string()) -> integer() | {error, not_found}.
 get_rest_client_timeout_in_sec(Host) ->
     case get_spark_auth_service_config(Host,rest_client_timeout_in_sec) of
@@ -219,6 +229,8 @@ get_rest_client_timeout_in_sec(Host) ->
         HasValue -> string_to_integer(HasValue);
         _ -> 15 %% 15 sec is default, this seems long to me
     end.
+
+%% @doc get the rest client call retry attempt from config file
 -spec get_rest_call_retry_attempt(Host::string()) -> integer() | {error, not_found}.
 get_rest_call_retry_attempt(Host) ->
     case get_spark_auth_service_config(Host,rest_call_retry_attempt) of
@@ -226,6 +238,56 @@ get_rest_call_retry_attempt(Host) ->
     	HasValue -> string_to_integer(HasValue);
         _ -> 0
     end.
+
+%% @doc check for the authentication http post response for Success is true and Error term is null
+%% @doc anything else is error and considered authentication error and failed.
+-spec check_auth_response(AuthStatus::[tuple()]) -> {ok, authenticated} | {error, term()} | term().
+check_auth_response(AuthStatus) ->
+    case AuthStatus of
+             [{<<"Success">>,true}, 
+              _MemberId, 
+              _AccessToken, 
+              _ExpiresIn, 
+              _AccessExpiresTime, 
+              _RefreshToken, 
+              _RefreshTokenExpiresTime, 
+              {<<"Error">>,null},
+              _IsPayingMember] -> {ok, authenticated};
+             {error, Reason} -> {error, Reason};
+             Error -> Error
+     end.	
+%% @doc authenticate against api server from ejabberd Jid
+-spec authenticate_request(Host::string(), Email::string(), Password::string()) -> {ok, authenticated} | {error, term() | term().
+authenticate_request(Host, Email, Password) ->
+    Host = 
+    ServiceEndpoint = get_spark_authservice_endpoint(Host),
+    AppId = get_spark_application_id(Host),
+    ClientSecret = get_spark_client_secrete(Host);
+    BrandId = get_spark_brandId(Host),
+    Resource = io_lib:format("brandid/~p/oauth2/accesstoken/application/~p",[BrandId,AppId]),
+    Url = restc:construct_url(ServiceEndpoint, Resource,["client_secret", ClientSecrete], {"Email", Email}, {"Password", PAssword}),   
+    post_authenticate_request(post, json, Url, [200], [], [""]);
+
+%% @doc post the Authentication Http Post request to the api server. Return {ok, authentication}
+%% @doc if the http code returns 200 and the Response body constains no Error message and the Success Status is true 
+-spec check_auth_response(term()) -> {ok, authenticated} | {error, term()} | term().
+post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
+    PostToUrl = restc:construct_url("https://api.spark.net","brandid/1003/oauth2/accesstoken/application/1000",[{"client_secret","SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"}, {"Email","rrobles01@spark.net"}, {"Password","1234"}]). 
+
+    RetValue = 
+       case restc:request(Method, Type, Url, [?AUTHENTICATED], Headers, Body) of
+	    {ok, Status, H, B} -> {ok, Status, H, B};
+            {error, Status, H, B} -> {error, Status, H, B}; 
+            Error -> Error;
+       end;
+    AuthStatus = 
+       case RetValue of
+	    {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody} -> {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody};
+            Error -> Error
+        end;
+    
+    check_auth_response(AuthStatus). 
+
 
 %% @private
 %% doc get password to be printed to log as ******
