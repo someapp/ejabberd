@@ -65,19 +65,19 @@
 -spec start(Host::string()) -> ok | {error, not_started}.
 %% @doc Perform any initialization needed for the module to run
 start(Host) ->
-    ?MYDEBUG("~p with host: ~p~n", [?CURRENT_FUNCTION_NAME(), Host]),
+    ?DEBUG("~p with host: ~p~n", [?CURRENT_FUNCTION_NAME(), Host]),
     
     RETVAL = {error, not_started}, 
-    ?MYDEBUG("Spark authentication with status: ~p~n", [RETVAL]),    
+    ?DEBUG("Spark authentication with status: ~p~n", [RETVAL]),    
     RETVAL.
 
 %% @doc Set user and password onto server. This is not needed; will be done on mainsite
 -spec set_password(User::string(), Server::string(), Password::string()) -> {error, not_allowed}.
 set_password(User, Server, Password) ->
     %% TODO security issue to log this, doit another way but also enough info for debugging
-    ?MYDEBUG("~p with user ~p server ~p password ~p~n", [?CURRENT_FUNCTION_NAME(),User, Server, get_password_string(Password)]),
+    ?DEBUG("~p with user ~p server ~p password ~p~n", [?CURRENT_FUNCTION_NAME(),User, Server, get_password_string(Password)]),
     RETVAL = {error, not_allowed},
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc Check if the user and password can login in server.
@@ -87,16 +87,16 @@ set_password(User, Server, Password) ->
 -spec check_password(User::string(), Server::string(), Password::string(),Digest::string(), DigestGen::function()) ->
      false.
 check_password(User, Server, Password, _Digest, _DigestGen) ->
-    ?MYDEBUG("~p with user ~p server ~p password ~p digest ~p digestgen ~p~n", 
+    ?DEBUG("~p with user ~p server ~p password ~p digest ~p digestgen ~p~n", 
 	   [?CURRENT_FUNCTION_NAME(), User, Server, get_password_string(Password), _Digest, _DigestGen]),
     RETVAL = check_password(User, Server, Password),
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc Check if the user and password can login in server.
 -spec check_password(User::string(), Host::string(), Password::string()) -> false .
 check_password(User, Host, Password) ->
-    ?MYDEBUG("~p with user ~p host ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
+    ?DEBUG("~p with user ~p host ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
     RETVAL = 
          case authenticate_request(Host, User, Password)of
               {ok, authenticated} -> true;
@@ -106,47 +106,47 @@ check_password(User, Host, Password) ->
               Error -> ?ERROR("Authentication Call Error ~p ~p~n ", [?CURRENT_FUNCTION_NAME(), {error, Error}]),);
                         false; 
         end;
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc Try register new user. This is not needed as this will go through website/mobile site
 -spec try_register(_User::string(), _Server::string(), _Password::string()) -> {error, not_allowed}.
 try_register(_User, _Server, _Password) ->
-    ?MYDEBUG("~p with user ~p server ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server, get_password_string(_Password)]),
+    ?DEBUG("~p with user ~p server ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server, get_password_string(_Password)]),
     RETVAL = {error, not_allowed},
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc Registered users list do not include anonymous users logged. This functionality we don't care.
 -spec dirty_get_registered_users() -> [].
 dirty_get_registered_users() ->
-    ?MYDEBUG("~p~n", [?CURRENT_FUNCTION_NAME()]),
+    ?DEBUG("~p~n", [?CURRENT_FUNCTION_NAME()]),
     RETVAL = [],
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc Registered users list do not include anonymous users logged. This function is not allowed, we just don't care.
 -spec get_vh_registered_users(_Host::string())-> false.
 get_vh_registered_users(_Host) ->
-    ?MYDEBUG("~p with host ~p~n", [?CURRENT_FUNCTION_NAME(), _Host]),
+    ?DEBUG("~p with host ~p~n", [?CURRENT_FUNCTION_NAME(), _Host]),
     RETVAL = false,
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc Get the password of the user. This function is not allowed, this case taken by mainsite.
 -spec get_password(_User::string(), _Server::string()) -> false | string().
 get_password(_User, _Server) ->
-    ?MYDEBUG("~p with user ~p server ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server]),
+    ?DEBUG("~p with user ~p server ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server]),
     RETVAL = false,
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc Get the password of the user. This function is not allowed, this case taken by mainsite.
 -spec get_password_s(_User::string(), _Server::string()) -> {error, not_allowed}. 
 get_password_s(_User, _Server) ->
-    ?MYDEBUG("~p with user ~p server ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server]),
+    ?DEBUG("~p with user ~p server ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server]),
     RETVAL = {error, not_allowed},
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
    
 %% @doc check if user exists 
@@ -155,34 +155,34 @@ get_password_s(_User, _Server) ->
 %% @doc true - which is sad - for ejabberd to go on with its business
 -spec is_user_exists(_User::string(), _Host::string()) ->true. 
 is_user_exists(_User, _Host) ->
-    ?MYDEBUG("~p with user ~p host ~p~~n", [?CURRENT_FUNCTION_NAME(), _User, _Host]),
+    ?DEBUG("~p with user ~p host ~p~~n", [?CURRENT_FUNCTION_NAME(), _User, _Host]),
     RETVAL = {error, not_implemented},
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.     
 
 %% @doc Remove user.This function is not allowed, this case taken by mainsite.
 -spec remove_user(_User::string(), _Server::string())-> {error, not_allowed}.
 remove_user(_User, _Server) ->
-    ?MYDEBUG("~p with user ~p server ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server]),
+    ?DEBUG("~p with user ~p server ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server]),
     RETVAL = {error, not_allowed},
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc Try to remove user if the provided password is correct. This function is not allowed.
 %% @doc User removal be taken care by main site. 
 -spec remove_user(_User::string(), _Server::string(), _Password::string()) -> not_allowed.
 remove_user(_User, _Server, _Password) ->
-    ?MYDEBUG("~p with user ~p server ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server, _Password]),
+    ?DEBUG("~p with user ~p server ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server, _Password]),
     RETVAL = not_allowed,
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc This is only executed by ejabberd_c2s for non-SASL auth client
 -spec plain_password_required()-> true.
 plain_password_required() ->
-    ?MYDEBUG("~p~n", [?CURRENT_FUNCTION_NAME()]),
+    ?DEBUG("~p~n", [?CURRENT_FUNCTION_NAME()]),
     RETVAL = false,
-    ?MYDEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.   
    
 %% @doc Flag to indicate if using external storage to cache credentials
@@ -190,9 +190,9 @@ plain_password_required() ->
 %%-spec store_type()-> scram | external | plain.
 -spec store_type()-> scram.
 store_type() ->
-    ?MYDEBUG(" store type ~p~n", [stored_type]),
+    ?DEBUG(" store type ~p~n", [stored_type]),
     RETVAL = scram,
-    ?MYDEBUG("~p with status ~p", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?DEBUG("~p with status ~p", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.  
 
 %%====================================================================
