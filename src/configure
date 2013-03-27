@@ -4421,7 +4421,7 @@ make_ejabberd_auth_spark=
 $as_echo_n "checking whether build ejabberd_auth_spark... " >&6; }
 # Check whether --enable-ejabberd_auth_sparkwas given.
 if test "${enable_ejabberd_auth_spark+set}" = set; then :
-  enableval=$enable_ejabberd_auth_sparkk; mr_enable_ejabberd_auth_spark="$enableval"
+  enableval=$enable_ejabberd_auth_spark; mr_enable_ejabberd_auth_spark="$enableval"
 else
   mr_enable_ejabberd_auth_spark=yes
 fi
