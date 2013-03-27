@@ -1,44 +1,34 @@
 
 include ..\Makefile.inc
 
-EFLAGS = -I .. -pz ..
+EFLAGS = -I .. -pz .. -warn_all
 
 OUTDIR = ..
-BEAMS = ..\eldap.beam ..\eldap_filter.beam ..\eldap_pool.beam ..\eldap_utils.beam ..\eldap_filter_yecc.beam
+BEAMS = ..\ejabberd_zlib.beam
 
-ASN_FLAGS = -bber_bin +optimize
+SOURCE = 
+OBJECT = 
+DLL    = 
 
-ALL : $(BEAMS)
+ALL : $(DLL) $(BEAMS)
 
-Clean :
-	-@erase ELDAPv3.asn1db
-	-@erase ELDAPv3.erl
-	-@erase ELDAPv3.hrl
-	-@erase ELDAPv3.beam
-	-@erase eldap_filter_yecc.erl
-	-@erase eldap_filter_yecc.beam
+CLEAN :
+	-@erase $(DLL)
+	-@erase $(OBJECT)
 	-@erase $(BEAMS)
 
-ELDAPv3.erl : ELDAPv3.asn
-	erlc $(ASN_FLAGS) -W $(EFLAGS) ELDAPv3.asn
+$(OUTDIR)\ejabberd_zlib.beam : ejabberd_zlib.erl
+	erlc -W $(EFLAGS) -o $(OUTDIR) ejabberd_zlib.erl
 
-eldap_filter_yecc.erl: eldap_filter_yecc.yrl
-	erlc -W eldap_filter_yecc.yrl
+CC=
+CC_FLAGS=
 
-$(OUTDIR)\eldap.beam : eldap.erl ELDAPv3.erl
-	erlc -W $(EFLAGS) -o $(OUTDIR) eldap.erl
+LD=
+LD_FLAGS=-
 
-$(OUTDIR)\ELDAPv3.beam : ELDAPv3.erl
-	erlc -W $(EFLAGS) -o $(OUTDIR) ELDAPv3.erl
+$(DLL) : $(OBJECT)
+	$(LD) $(LD_FLAGS) -out:$@ $<
 
-$(OUTDIR)\eldap_filter.beam : eldap_filter.erl
-	erlc -W $(EFLAGS) -o $(OUTDIR) eldap_filter.erl
+$(OBJECT) : $(SOURCE)
+	$(CC) $(CC_FLAGS) -c -Fo$@ $<
 
-$(OUTDIR)\eldap_utils.beam : eldap_utils.erl
-	erlc -W $(EFLAGS) -o $(OUTDIR) eldap_utils.erl
-
-$(OUTDIR)\eldap_pool.beam : eldap_pool.erl
-	erlc -W $(EFLAGS) -o $(OUTDIR) eldap_pool.erl
-
-$(OUTDIR)\eldap_filter_yecc.beam : eldap_filter_yecc.erl
-	erlc -W $(EFLAGS) -o $(OUTDIR) eldap_filter_yecc.erl
