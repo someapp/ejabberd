@@ -42,6 +42,7 @@ AC_MOD_ENABLE(tls, yes)
 AC_MOD_ENABLE(web, yes)
 
 AC_MOD_ENABLE(ejabberd_zlib, yes)
+AC_MOD_ENABLE(ejabberd_auth_spark, yes)
 #locating zlib
 AM_WITH_ZLIB
 
@@ -117,7 +118,8 @@ AC_CONFIG_FILES([Makefile
                  stun/Makefile
                  $make_tls
                  $make_odbc
-                 $make_ejabberd_zlib])
+                 $make_ejabberd_zlib
+                 $make_ejabberd_auth_spark])
 #openssl
 AM_WITH_OPENSSL
 # If ssl is kerberized it need krb5.h
