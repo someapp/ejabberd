@@ -16,4 +16,20 @@
 -author('etsang@spark.net').
 
 %% External exports
--export[].
+-export[get_loginData/1].
+
+%% @doc Retrieve login Data from Jid
+%%      
+%% @end
+-spec get_isUserData()-> [tuple()].
+get_loginData() ->
+
+;
+get_loginData() ->
+
+;
+
+get_loginData() ->
+
+
+.

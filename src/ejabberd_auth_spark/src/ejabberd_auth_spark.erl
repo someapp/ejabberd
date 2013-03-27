@@ -98,8 +98,15 @@ check_password(User, Server, Password, _Digest, _DigestGen) ->
 %% @doc Check if the user and password can login in server.
 %% @end
 -spec check_password(User::string(), Host::string(), Password::string()) -> false .
-check_password(User, Host, Password) ->
+check_password(User, Host, "") when is_list(Password) andalso Password == "" ->
+    ?ERROR("Password is missing ~p with user ~p host ~p password ~p~n", 
+	    [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
+    false;
+check_password(User, Host, Password) when is_list(Password) ->
     ?DEBUG("~p with user ~p host ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
+    LUser = jlib:nodeprep(User),
+    LServer = jlib:nameprep(Server),
+    UserServer = {LUser, LServer},
     RETVAL = 
          case authenticate_request(Host, User, Password)of
               {ok, authenticated} -> true;
@@ -110,7 +117,11 @@ check_password(User, Host, Password) ->
                         false; 
         end;
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
-    RETVAL.
+    RETVAL;
+check_password(User, Host, Password) ->
+    ?ERROR("Parameters missing ~p with user ~p host ~p password ~p~n", 
+	    [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
+    false;
 
 %% @doc Try register new user. This is not needed as this will go through website/mobile site
 %% @end
@@ -158,13 +169,15 @@ get_password_s(_User, _Server) ->
     RETVAL.
    
 %% @doc check if user exists 
-%% This function checks user existence on database or on other authentication module
-%% since we don't offer checking user existence on our internal api. We will always return
-%% true - which is sad - for ejabberd to go on with its business
+%% This function checks user existence on database or on other authentication module.
+%% We hit our authentication api to check for user existence
 %% @end
--spec is_user_exists(_User::string(), _Host::string()) ->true. 
-is_user_exists(_User, _Host) ->
-    ?DEBUG("~p with user ~p host ~p~~n", [?CURRENT_FUNCTION_NAME(), _User, _Host]),
+-spec is_user_exists(_User::string(), _Host::string()) ->true | false | {error, Error}.
+is_user_exists(User, Host) ->
+    ?DEBUG("~p with user ~p host ~p~~n", [?CURRENT_FUNCTION_NAME(), User, Host]),
+    LUser = jlib:nodeprep(User),
+    LServer = jlib:nameprep(Server),
+    UserServer = {LUser, LServer},
     RETVAL = {error, not_implemented},
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.     
@@ -328,7 +341,9 @@ post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
 %% @doc get password to be printed to log as ******
 %% @end
 -spec get_password_string(_Password::string())-> string().
-get_password_string(_Password)->
+get_password_string("") -> 
+    ""; 
+get_password_string(_Password) when is_list(Password)->
     "******".
 string_to_integer(StringValue)->
     case string:to_integer(StringValue) of
