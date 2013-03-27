@@ -98,15 +98,15 @@ check_password(User, Server, Password, _Digest, _DigestGen) ->
 %% @doc Check if the user and password can login in server.
 %% @end
 -spec check_password(User::string(), Host::string(), Password::string()) -> false .
-check_password(User, Host, "") when is_list(Password) andalso Password == "" ->
+check_password(User, Host, "") ->
     ?ERROR_MSG("Password is missing ~p with user ~p host ~p password ~p~n", 
-	    [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
+	    [?CURRENT_FUNCTION_NAME(), User, Host, ""]),
     false;
 check_password(User, Host, Password) when is_list(Password) ->
     ?DEBUG("~p with user ~p host ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
     LUser = jlib:nodeprep(User),
-    LServer = jlib:nameprep(Server),
-    UserServer = {LUser, LServer},  
+    LHost = jlib:nameprep(Host),
+    UserHost = {LUser, LHost},  
     RETVAL =  case authenticate_request(Host, User, Password) of
                    {ok, authenticated} -> true;
                    {error, REASON} -> 
@@ -176,8 +176,8 @@ get_password_s(_User, _Server) ->
 is_user_exists(User, Host) ->
     ?DEBUG("~p with user ~p host ~p~~n", [?CURRENT_FUNCTION_NAME(), User, Host]),
     LUser = jlib:nodeprep(User),
-    LServer = jlib:nameprep(Server),
-    UserServer = {LUser, LServer},
+    LHost = jlib:nameprep(Host),
+    UserHost = {LUser, LHost},
     RETVAL = {error, not_implemented},
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.     
@@ -308,33 +308,37 @@ authenticate_request(Host, Email, Password) ->
     
     ServiceEndpoint = get_spark_authservice_endpoint(Host),
     AppId = get_spark_application_id(Host),
-    ClientSecret = get_spark_client_secrete(Host);
-    BrandId = get_spark_brandId(Host),
+    ClientSecret = get_spark_client_secrete(Host),
+    BrandId = spark_parse_loginData:get_spark_brandId(Host),
     Resource = io_lib:format("brandid/~p/oauth2/accesstoken/application/~p",[BrandId,AppId]),
-    Url = restc:construct_url(ServiceEndpoint, Resource,["client_secret", ClientSecrete], {"Email", Email}, {"Password", PAssword}),   
-    post_authenticate_request(post, json, Url, [200], [], [""]);
+    Url = restc:construct_url(ServiceEndpoint, Resource,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),   
+    post_authenticate_request(post, json, Url, [200], [], [""]).
 
 %% @private
 %% @doc post the Authentication Http Post request to the api server. Return {ok, authentication}
 %% if the http code returns 200 and the Response body constains no error message and the Success Status is true 
 %% @end
--spec check_auth_response(term()) -> {ok, authenticated} | {error, term()} | term().
+-spec post_authenticate_request(Method::atom(), Type::atom(), Url::string(), Expect::[atom()], Headers::[term()], Body::[term()]) -> {ok, authenticated} | {error, term()} | term().
 post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
-    PostToUrl = restc:construct_url("https://api.spark.net","brandid/1003/oauth2/accesstoken/application/1000",[{"client_secret","SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"}, {"Email","rrobles01@spark.net"}, {"Password","1234"}]). 
+    PostToUrl = restc:construct_url("https://api.spark.net","brandid/1003/oauth2/accesstoken/application/1000",[{"client_secret","SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"}, {"Email","rrobles01@spark.net"}, {"Password","1234"}]), 
 
     RetValue = 
        case restc:request(Method, Type, Url, [?AUTHENTICATED], Headers, Body) of
 	    {ok, Status, H, B} -> {ok, Status, H, B};
             {error, Status, H, B} -> {error, Status, H, B}; 
-            ERROR -> ERROR;
-       end;
-    AuthStatus = 
-       case RetValue of
-	    {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody} -> {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody};
             ERROR -> ERROR
-        end;
-    
-    check_auth_response(AuthStatus). 
+       end,
+    ?ERROR_MSG("RestCall failed with status ~p ~p~n", 
+	    [?CURRENT_FUNCTION_NAME(), RetValue]),    
+   
+    Status = case RetValue of
+	    {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody} -> check_auth_response({ok, ?AUTHENTICATED, _ServerInfo, ResponseBody});
+            Error -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
+            [?CURRENT_FUNCTION_NAME(), Error]), 
+		     Error
+    end,
+    Status.
+
 %% @private
 %% @doc get access expiration time
 %% @end
@@ -347,7 +351,7 @@ post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
 -spec get_password_string(_Password::string())-> string().
 get_password_string("") -> 
     ""; 
-get_password_string(_Password) when is_list(Password)->
+get_password_string(_Password) when is_list(_Password)->
     "******".
 string_to_integer(StringValue)->
     case string:to_integer(StringValue) of
