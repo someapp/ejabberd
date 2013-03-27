@@ -70,7 +70,8 @@
 start(Host) ->
     ?DEBUG("~p with host: ~p~n", [?CURRENT_FUNCTION_NAME(), Host]),
     
-    RETVAL = {error, not_started}, 
+    %%RETVAL = {error, not_started}, 
+    RETVAL = ok,
     ?DEBUG("Spark authentication with status: ~p~n", [RETVAL]),    
     RETVAL.
 
@@ -78,10 +79,10 @@ start(Host) ->
 %% @end
 -spec set_password(User::string(), Server::string(), Password::string()) -> {error, not_allowed}.
 set_password(User, Server, Password) ->
-    %% TODO security issue to log this, doit another way but also enough info for debugging
-    ?DEBUG("~p with user ~p server ~p password ~p~n", [?CURRENT_FUNCTION_NAME(),User, Server, get_password_string(Password)]),
+    
+    ?ERROR_MSG("~p with user ~p server ~p password ~p~n", [?CURRENT_FUNCTION_NAME(),User, Server, get_password_string(Password)]),
     RETVAL = {error, not_allowed},
-    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc Check if the user and password can login in server.
@@ -89,10 +90,10 @@ set_password(User, Server, Password) ->
 -spec check_password(User::string(), Server::string(), Password::string(),Digest::string(), DigestGen::function()) ->
      false.
 check_password(User, Server, Password, _Digest, _DigestGen) ->
-    ?DEBUG("~p with user ~p server ~p password ~p digest ~p digestgen ~p~n", 
+    ?INFO_MSG("~p with user ~p server ~p password ~p digest ~p digestgen ~p~n", 
 	   [?CURRENT_FUNCTION_NAME(), User, Server, get_password_string(Password), _Digest, _DigestGen]),
     RETVAL = check_password(User, Server, Password),
-    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
+    ?INFO_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
 %% @doc Check if the user and password can login in server.
