@@ -632,8 +632,10 @@ make_pam
 pam
 ZLIB_LIBS
 ZLIB_CFLAGS
-make_ejabberd_zlib
+/
 ejabberd_zlib
+make_ejabberd_auth_spark
+ejabberd_auth_spark
 make_web
 web
 make_tls
@@ -4412,6 +4414,24 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $mr_enable_ejabberd_zlib" >&5
 $as_echo "$mr_enable_ejabberd_zlib" >&6; }
 
+
+ejabberd_auth_spark=
+make_ejabberd_auth_spark=
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether build ejabberd_auth_spark" >&5
+$as_echo_n "checking whether build ejabberd_auth_spark... " >&6; }
+# Check whether --enable-ejabberd_auth_sparkwas given.
+if test "${enable_ejabberd_auth_spark+set}" = set; then :
+  enableval=$enable_ejabberd_auth_sparkk; mr_enable_ejabberd_auth_spark="$enableval"
+else
+  mr_enable_ejabberd_auth_spark=yes
+fi
+
+if test "$mr_enable_ejabberd_auth_spark" = "yes"; then
+ejabberd_auth_spark=ejabberd_auth_spark
+make_ejabberd_auth_spark=ejabberd_auth_spark/Makefile
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $mr_enable_ejabberd_auth_spark" >&5
+$as_echo "$mr_enable_ejabberd_auth_spark" >&6; }
 
 
 
