@@ -335,7 +335,11 @@ post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
         end;
     
     check_auth_response(AuthStatus). 
-
+%% @private
+%% @doc get access expiration time
+%% @end
+-spec get_access_expiration()->
+   
 
 %% @private
 %% @doc get password to be printed to log as ******

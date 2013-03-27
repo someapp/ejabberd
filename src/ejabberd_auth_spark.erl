@@ -64,23 +64,23 @@
 %%====================================================================
 %% API
 %%====================================================================
--spec start(Host::string()) -> ok | {ERROR_MSG, not_started}.
+-spec start(Host::string()) -> ok | {error, not_started}.
 %% @doc Perform any initialization needed for the module to run
 %% @end
 start(Host) ->
     ?DEBUG("~p with host: ~p~n", [?CURRENT_FUNCTION_NAME(), Host]),
     
-    RETVAL = {ERROR_MSG, not_started}, 
+    RETVAL = {error, not_started}, 
     ?DEBUG("Spark authentication with status: ~p~n", [RETVAL]),    
     RETVAL.
 
 %% @doc Set user and password onto server. This is not needed; will be done on mainsite
 %% @end
--spec set_password(User::string(), Server::string(), Password::string()) -> {ERROR_MSG, not_allowed}.
+-spec set_password(User::string(), Server::string(), Password::string()) -> {error, not_allowed}.
 set_password(User, Server, Password) ->
     %% TODO security issue to log this, doit another way but also enough info for debugging
     ?DEBUG("~p with user ~p server ~p password ~p~n", [?CURRENT_FUNCTION_NAME(),User, Server, get_password_string(Password)]),
-    RETVAL = {ERROR_MSG, not_allowed},
+    RETVAL = {error, not_allowed},
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
@@ -98,7 +98,8 @@ check_password(User, Server, Password, _Digest, _DigestGen) ->
 %% @doc Check if the user and password can login in server.
 %% @end
 -spec check_password(User::string(), Host::string(), Password::string()) -> false .
-check_password(User, Host, "") when is_list(Password) andalso Password == "" ->
+check_password(User, Host, "") when is_list(Password) an
+dalso Password == "" ->
     ?ERROR_MSG("Password is missing ~p with user ~p host ~p password ~p~n", 
 	    [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
     false;
@@ -106,14 +107,13 @@ check_password(User, Host, Password) when is_list(Password) ->
     ?DEBUG("~p with user ~p host ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
-    UserServer = {LUser, LServer},
-    RETVAL = 
-         case authenticate_request(Host, User, Password)of
+    UserServer = {LUser, LServer},  
+    RETVAL =  case authenticate_request(Host, User, Password) of
               {ok, authenticated} -> true;
               {error, REASON} -> 
-                        ?INFO_MSG("Authenication failed~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, REASON}]),
+                        ?INFO_MSG("Authenication failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, REASON}]),
                         false;
-              Error -> ?ERROR_MSG("Authentication Call error ~p ~p~n ", [?CURRENT_FUNCTION_NAME(), {error, Error}]),
+              Error -> ?ERROR_MSG("Authentication Call error ~p ~p~n , [?CURRENT_FUNCTION_NAME(), {error, Error}]),
                         false; 
          end,
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
@@ -125,10 +125,10 @@ check_password(User, Host, Password) ->
 
 %% @doc Try register new user. This is not needed as this will go through website/mobile site
 %% @end
--spec try_register(_User::string(), _Server::string(), _Password::string()) -> {ERROR_MSG, not_allowed}.
+-spec try_register(_User::string(), _Server::string(), _Password::string()) -> {error, not_allowed}.
 try_register(_User, _Server, _Password) ->
     ?DEBUG("~p with user ~p server ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server, get_password_string(_Password)]),
-    RETVAL = {ERROR_MSG, not_allowed},
+    RETVAL = {error, not_allowed},
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
@@ -161,10 +161,10 @@ get_password(_User, _Server) ->
 
 %% @doc Get the password of the user. This function is not allowed, this case taken by mainsite.
 %% @end
--spec get_password_s(_User::string(), _Server::string()) -> {ERROR_MSG, not_allowed}. 
+-spec get_password_s(_User::string(), _Server::string()) -> {error, not_allowed}. 
 get_password_s(_User, _Server) ->
     ?DEBUG("~p with user ~p server ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server]),
-    RETVAL = {ERROR_MSG, not_allowed},
+    RETVAL = {error, not_allowed},
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
    
@@ -172,22 +172,22 @@ get_password_s(_User, _Server) ->
 %% This function checks user existence on database or on other authentication module.
 %% We hit our authentication api to check for user existence
 %% @end
--spec is_user_exists(_User::string(), _Host::string()) ->true | false | {ERROR_MSG, ERROR_MSG}.
+-spec is_user_exists(_User::string(), _Host::string()) ->true | false | {error, atom()}.
 is_user_exists(User, Host) ->
     ?DEBUG("~p with user ~p host ~p~~n", [?CURRENT_FUNCTION_NAME(), User, Host]),
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
     UserServer = {LUser, LServer},
-    RETVAL = {ERROR_MSG, not_implemented},
+    RETVAL = {error, not_implemented},
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.     
 
 %% @doc Remove user.This function is not allowed, this case taken by mainsite.
 %% @end
--spec remove_user(_User::string(), _Server::string())-> {ERROR_MSG, not_allowed}.
+-spec remove_user(_User::string(), _Server::string())-> {error, not_allowed}.
 remove_user(_User, _Server) ->
     ?DEBUG("~p with user ~p server ~p~n", [?CURRENT_FUNCTION_NAME(), _User, _Server]),
-    RETVAL = {ERROR_MSG, not_allowed},
+    RETVAL = {error, not_allowed},
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.
 
