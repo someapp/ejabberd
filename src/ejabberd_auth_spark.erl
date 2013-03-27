@@ -98,8 +98,7 @@ check_password(User, Server, Password, _Digest, _DigestGen) ->
 %% @doc Check if the user and password can login in server.
 %% @end
 -spec check_password(User::string(), Host::string(), Password::string()) -> false .
-check_password(User, Host, "") when is_list(Password) an
-dalso Password == "" ->
+check_password(User, Host, "") when is_list(Password) andalso Password == "" ->
     ?ERROR_MSG("Password is missing ~p with user ~p host ~p password ~p~n", 
 	    [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
     false;
@@ -109,19 +108,20 @@ check_password(User, Host, Password) when is_list(Password) ->
     LServer = jlib:nameprep(Server),
     UserServer = {LUser, LServer},  
     RETVAL =  case authenticate_request(Host, User, Password) of
-              {ok, authenticated} -> true;
-              {error, REASON} -> 
-                        ?INFO_MSG("Authenication failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, REASON}]),
-                        false;
-              Error -> ?ERROR_MSG("Authentication Call error ~p ~p~n , [?CURRENT_FUNCTION_NAME(), {error, Error}]),
-                        false; 
-         end,
+                   {ok, authenticated} -> true;
+                   {error, REASON} -> 
+                                    ?INFO_MSG("Authenication failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, REASON}]),
+                                    false;
+                   Error -> 
+    			            ?ERROR_MSG("Authenication failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, Error}]),
+                                    false 
+              end,
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL;
 check_password(User, Host, Password) ->
     ?ERROR_MSG("Parameters missing ~p with user ~p host ~p password ~p~n", 
 	    [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
-    false;
+    false.
 
 %% @doc Try register new user. This is not needed as this will go through website/mobile site
 %% @end
@@ -144,7 +144,7 @@ dirty_get_registered_users() ->
 %% @doc Registered users list do not include anonymous users logged. This function is not allowed, we just don't care.
 %% @end
 -spec get_vh_registered_users(_Host::string())-> false.
-get_vh_registered_users(_Host) ->m
+get_vh_registered_users(_Host) ->
     ?DEBUG("~p with host ~p~n", [?CURRENT_FUNCTION_NAME(), _Host]),
     RETVAL = false,
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
@@ -241,7 +241,7 @@ get_spark_authservice_endpoint(Host) ->
 
 %% @private
 %% @doc get the rest applicationId from config file
--spec get_spark_application_id(Host::string()) -> string() | {error not_found}.
+-spec get_spark_application_id(Host::string()) -> string() | {error, not_found}.
 get_spark_application_id(Host) ->
     get_spark_auth_service_config(Host, spark_application_id). 
    
@@ -303,9 +303,9 @@ check_auth_response(AuthStatus) ->
 %% @private
 %% @doc authenticate against api server from ejabberd Jid
 %% @end
--spec authenticate_request(Host::string(), Email::string(), Password::string()) -> {ok, authenticated} | {error, term() | term().
+-spec authenticate_request(Host::string(), Email::string(), Password::string()) -> {ok, authenticated} | {error, term()} | term().
 authenticate_request(Host, Email, Password) ->
-    Host = 
+    
     ServiceEndpoint = get_spark_authservice_endpoint(Host),
     AppId = get_spark_application_id(Host),
     ClientSecret = get_spark_client_secrete(Host);
@@ -338,7 +338,7 @@ post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
 %% @private
 %% @doc get access expiration time
 %% @end
--spec get_access_expiration()->
+%%-spec get_access_expiration()->
    
 
 %% @private
