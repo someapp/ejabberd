@@ -323,22 +323,26 @@ post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
     PostToUrl = restc:construct_url("https://api.spark.net","brandid/1003/oauth2/accesstoken/application/1000",[{"client_secret","SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"}, {"Email","rrobles01@spark.net"}, {"Password","1234"}]), 
 
     RetValue = 
-       case restc:request(Method, Type, Url, [?AUTHENTICATED], Headers, Body) of
+       case restc:request(Method, Type, PostToUrl, [?AUTHENTICATED], Headers, Body) of
 	    {ok, Status, H, B} -> {ok, Status, H, B};
-            {error, Status, H, B} -> {error, Status, H, B}; 
+            {error, _Status, _H, _B} -> {error, _Status, _H, _B}; 
             ERROR -> ERROR
        end,
     ?ERROR_MSG("RestCall failed with status ~p ~p~n", 
 	    [?CURRENT_FUNCTION_NAME(), RetValue]),    
    
     Status = case RetValue of
-	    {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody} -> check_auth_response({ok, ?AUTHENTICATED, _ServerInfo, ResponseBody});
+	    {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody} -> check_auth_response(ResponseBody);
             Error -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
             [?CURRENT_FUNCTION_NAME(), Error]), 
 		     Error
     end,
-    Status.
-
+    case Status of 
+         {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody} -> check_auth_response(Status);
+         {error, Reason} -> {error, Reason};
+         Else -> Else
+    end.
+   
 %% @private
 %% @doc get access expiration time
 %% @end
