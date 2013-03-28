@@ -16,8 +16,8 @@
 -author('etsang@spark.net').
 
 %% External exports
--export[get_loginData/1,
-        get_brandId_from_communityId/1].
+-export[get_loginData/2,
+        get_brandId_from_communityId/2].
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -28,23 +28,25 @@
 %%      returns the {brandid, integer}, {memberid, integer} or {error, Reason}
 %% @end
 -spec get_loginData(UserName::string())-> {error, {brandid, atom()}, {memberid, atom()}, atom()}| {ok, {atom(), integer},  {atom(), integer()}}.
-get_loginData("") ->
+get_loginData("",Host) ->
   {error, user_missing}
 ;
-get_loginData(UserName) when (is_list(UserName)) ->
+get_loginData(UserName, Host) when (is_list(UserName)) ->
   CommunityAndMemberId = 
 		case re:split(UserName,"-") of 
  		     [CommunityId, MemberId] -> [CommunityId, MemberId];
                      {error, Reason} -> {error, Reason};
                      Else -> {error, Else}
   		end,
-  case get_brandId_from_communityId(CommunityAndMemberId) of
-        {ok, {brandid, C}, {memberId, MemberId}} -> {ok, {brandid, C}, {memberId, MemberId}};
-        {error, {brandid, not_found}, {memberId, not_found}, Reason} -> {error, {brandid, not_found}, {memberId, not_found}, Reason};
-        Else -> {error, {brandid, not_found}, {memberId, not_found}, Else}
-  end,
-  RetValue;
-get_loginData(_) ->
+  case get_brandId_from_communityId(CommunityAndMemberId,Host) of
+        {ok, {brandid, C}, {memberId, Id}} -> 
+					     {ok, {brandid, C}, {memberId, Id}};
+        {error, {brandid, not_found}, {memberId, not_found}, _Reason} -> 
+									{error, {brandid, not_found}, {memberId, not_found}, _Reason};
+        _Else -> 
+		{error, {brandid, not_found}, {memberId, not_found}, _Else}
+  end;
+get_loginData(_,_) ->
    {error, user_missing}. 
 
 %% 
@@ -52,12 +54,12 @@ get_loginData(_) ->
 %%      returns the {brandid, integer}, {memberid, integer} or {error, Reason}
 %% @end
 -spec get_loginData(UserName::string())-> {error, tuple(), term()} | {ok, {atom(), integer},  {atom(), integer()}}.
-get_brandId_from_communityId({error, Reason}) -> 
+get_brandId_from_communityId({error, Reason}, _) -> 
   {error, {brandid, not_found}, {memberid, not_found}, Reason}; 
-get_brandId_from_communityId([CommunityId, MemberId]) when (CommunityId > 0)->
+get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 0)->
    Ids = case ejabberd_auth_spark:get_spark_auth_service_config({community2brandId,Host}) of
              {error, Reason} -> {error, Reason};             
-             Val -> find_Value(CommunityId, Ids)
+             Val -> Val;
          end,
    Val1 = case Ids of
         {error, Reason} -> {error, Reason};
@@ -68,7 +70,7 @@ get_brandId_from_communityId([CommunityId, MemberId]) when (CommunityId > 0)->
         {ok, {brandid, C}} -> {ok, {brandid, C}, {memberId, MemberId}};
         {error, Reason} -> {error, {brandid, not_found}, {memberId, not_found}, Reason}
    end;
-get_brandId_from_communityId(_) -> 
+get_brandId_from_communityId(_,_) -> 
   {error, {brandid, not_found}, {memberid, not_found}, mal_formed}.
 
 %% @private
