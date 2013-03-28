@@ -126,11 +126,28 @@ string_to_integer(StringValue) when is_list(StringValue)->
         _ -> {error, cannot_convert}
     end;
 string_to_integer(_) -> 
+       
 	{error, cannot_convert}.
 	
 %%%%%% EUNIT %%%%%%%%%%%%%%%%%%
 -ifdef(TEST).
 string_to_integer_emptystring_test() ->[?assertEqual({error, cannot_convert}, string_to_integer("")), 
 				       ?assertEqual({error, cannot_convert}, string_to_integer(badtype))].
+string_to_integer_test()-> [?assertEqual(1, string_to_integer("1"))].
+
+get_spark_communityId_brandId_mapping_test()-> [?assertEqual([{spark, 1, 1001},{jdate, 3, 1003},{cupid, 10, 1015},{bbw, 23, 90410},{blacksingle, 24, 90510}], get_spark_communityId_brandId_mapping("developer01"))].
+
+get_spark_authservice_endpoint_test()-> [?assertEqual("http://api.dev.spark.net", get_spark_authservice_endpoint("developer01"))].
+
+get_rest_client_timeout_in_sec_test()-> [?assertEqual("15", get_rest_client_timeout_in_sec("developer01"))].
+
+get_spark_client_secrete_test()-> [?assertEqual("nZGVVfj8dfaBPKsx_dmcRXQml8o5N-iivf5lBkrAmLQ1", get_spark_client_secrete("developer01"))].
+
+get_rest_call_retry_attempt_test()->[?assertEqual("0", get_rest_call_retry_attempt("developer01"))].
+
+
+get_spark_application_id_test()-> [?assertEqual("1054", get_spark_application_id("developer01"))].
+
+
 
 -endif.
