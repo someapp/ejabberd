@@ -69,11 +69,12 @@
 %% @end
 start(Host) ->
     ?DEBUG("~p with host: ~p~n", [?CURRENT_FUNCTION_NAME(), Host]),
-    
-    %%RETVAL = {error, not_started}, 
     RETVAL = ok,
     ?DEBUG("Spark authentication with status: ~p~n", [RETVAL]),    
     RETVAL.
+
+
+
 
 %% @doc Set user and password onto server. This is not needed; will be done on mainsite
 %% @end
@@ -179,6 +180,17 @@ is_user_exists(User, Host) ->
     LUser = jlib:nodeprep(User),
     LHost = jlib:nameprep(Host),
     UserHost = {LUser, LHost},
+    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
+    ResourceEndpoint = ejabberd_auth_spark_config:get_isUserExists_service_endpoint(Host),
+      
+    Val = case get_loginData(User, Host) of
+         {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
+         {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
+    end,
+    Url = restc:construct_url(ServiceEndpoint, Resource,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),
+
+    post_isUserExists_request(post, json, Url, [200], [], [""]).
+
     RETVAL = {error, not_implemented},
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.     
@@ -225,63 +237,6 @@ store_type() ->
 %% Internal functions
 %%====================================================================
 %% @private
-%% @doc get the authentication endpoint rest client to talk to
-%% @end
-get_spark_auth_service_config(Host, TokenName) ->
-    case ejabberd_config:get_local_option({TokenName, Host}) of
-	undefined -> {error, not_found};
-	Val   -> Val
-    end.
-
-%% @private
-%% @doc get the rest api authentication endpoint from config file 
-%% @end
--spec get_spark_authservice_endpoint(Host::string()) -> string() | {error, endpoint_notfound}.
-get_spark_authservice_endpoint(Host) ->
-    get_spark_auth_service_config(Host, spark_auth_endpoint). 
-
-%% @private
-%% @doc get the rest applicationId from config file
--spec get_spark_application_id(Host::string()) -> string() | {error, not_found}.
-get_spark_application_id(Host) ->
-    get_spark_auth_service_config(Host, spark_application_id). 
-   
-
-
-%% @private
-%% @doc get the rest client secrete from config file 
-%% @end
--spec get_spark_client_secrete(Host::string()) -> integer() | {error, not_found}.
-get_spark_client_secrete(Host) ->
-    case get_spark_auth_service_config(Host,spark_client_secrete) of
-       {error, REASON} -> {error, REASON}; 	
-       HasValue -> string_to_integer(HasValue);
-        _ -> 0 %% don't retry by default
-    end. 
-
-%% @private
-%% @doc get the rest client time out value in seconds from config file 
-%% @end
--spec get_rest_client_timeout_in_sec(Host::string()) -> integer() | {error, not_found}.
-get_rest_client_timeout_in_sec(Host) ->
-    case get_spark_auth_service_config(Host,rest_client_timeout_in_sec) of
-       {error, REASON} -> {error, REASON}; 
-        HasValue -> string_to_integer(HasValue);
-        _ -> 15 %% 15 sec is default, this seems long to me
-    end.
-
-%% @private
-%% @doc get the rest client call retry attempt from config file
-%% @end
--spec get_rest_call_retry_attempt(Host::string()) -> integer() | {error, not_found}.
-get_rest_call_retry_attempt(Host) ->
-    case get_spark_auth_service_config(Host,rest_call_retry_attempt) of
-        {error, REASON} -> {error, REASON}; 
-    	HasValue -> string_to_integer(HasValue);
-        _ -> 0
-    end.
-
-%% @private
 %% @doc check for the authentication http post response for Success is true and error term is null
 %%      anything else is error and considered authentication error and failed.
 %% @end
@@ -301,18 +256,32 @@ check_auth_response(AuthStatus) ->
              ERROR -> ERROR
      end.	
 
+
+%% @private
+%% @doc Get Parameters to make restful call
+%% @end
+get_global_call_parameters(Host)->
+    BaseServiceEndpoint = ejabberd_auth_spark_config:get_spark_authservice_endpoint(Host),
+    AppId = ejabberd_auth_spark_config:get_spark_application_id(Host),
+    ClientSecret = ejabberd_auth_spark_config:get_spark_client_secrete(Host),
+    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}}.
+
 %% @private
 %% @doc authenticate against api server from ejabberd Jid
 %% @end
 -spec authenticate_request(Host::string(), Email::string(), Password::string()) -> {ok, authenticated} | {error, term()} | term().
-authenticate_request(Host, Email, Password) ->
-    
-    ServiceEndpoint = get_spark_authservice_endpoint(Host),
-    AppId = get_spark_application_id(Host),
-    ClientSecret = get_spark_client_secrete(Host),
-    BrandId = spark_parse_loginData:get_spark_brandId(Host),
-    Resource = io_lib:format("brandid/~p/oauth2/accesstoken/application/~p",[BrandId,AppId]),
-    Url = restc:construct_url(ServiceEndpoint, Resource,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),   
+authenticate_request(Host, User, Password) ->    
+    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
+   
+    ResourceEndpoint = ejabberd_auth_spark_config:get_authentication_service_endpoint(Host),
+    Val = case get_loginData(User, Host) of
+         {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
+         {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
+    end,
+    Url = restc:construct_url(ServiceEndpoint, Resource,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),
+      
+  %  Resource = io_lib:format("brandid/~p/oauth2/accesstoken/application/~p",[BrandId,AppId]),
+  %  Url = restc:construct_url(ServiceEndpoint, Resource,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),   
     post_authenticate_request(post, json, Url, [200], [], [""]).
 
 %% @private
@@ -342,7 +311,29 @@ post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
          {error, Reason} -> {error, Reason};
          Else -> Else
     end.
+
+post_isUserExists_request(Method, Type, Url, Expect, Headers, Body) ->
+    
+    RetValue = 
+       case restc:request(Method, Type, Url, [?AUTHENTICATED], Headers, Body) of
+	    {ok, Status, H, B} -> {ok, Status, H, B};
+            {error, Status, _H, _B} -> {error, Status, _H, _B}; 
+            Status -> Status
+       end,
+    ?ERROR_MSG("RestCall failed with status ~p ~p~n", 
+	    [?CURRENT_FUNCTION_NAME(), RetValue]),    
    
+    Status = case RetValue of
+	    {ok, ?AUTHENTICATED, _, ResponseBody} -> check_auth_response(ResponseBody);
+            ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
+            [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
+		     {error, bad_responsebody}
+    end,
+    case Status of 
+         {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody} -> check_auth_response(Status);
+         {error, Reason} -> {error, Reason};
+         Else -> Else
+    end.   
 
 %% @private
 %% @doc get access expiration time
