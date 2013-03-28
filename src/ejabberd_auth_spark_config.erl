@@ -1,3 +1,4 @@
+
 %%%----------------------------------------------------------------------
 %%%
 %%% @author : Edward Tsang <etsang@spark.net>
@@ -21,7 +22,7 @@
 -export([
 	get_spark_authservice_endpoint/1,
         get_spark_client_secrete/1,
-        get_rest_call_retry_attempt/1, 
+        get_spark_application_id/1, 
 	get_rest_client_timeout_in_sec/1, 
 	get_rest_call_retry_attempt/1,
 	get_spark_communityId_brandId_mapping/1
@@ -59,8 +60,7 @@ get_spark_application_id(Host) ->
 get_spark_client_secrete(Host) ->
     case get_spark_auth_service_config(Host,spark_client_secrete) of
        {error, REASON} -> {error, REASON}; 	
-       HasValue -> string_to_integer(HasValue);
-        _ -> 0 %% don't retry by default
+       HasValue -> string_to_integer(HasValue)
     end. 
 
 %% @private
@@ -68,10 +68,13 @@ get_spark_client_secrete(Host) ->
 %% @end
 -spec get_rest_client_timeout_in_sec(Host::string()) -> integer() | {error, not_found}.
 get_rest_client_timeout_in_sec(Host) ->
-    case get_spark_auth_service_config(Host,rest_client_timeout_in_sec) of
+    Val = case get_spark_auth_service_config(Host,rest_client_timeout_in_sec) of
        {error, REASON} -> {error, REASON}; 
-        HasValue -> string_to_integer(HasValue);
-        _ -> 15 %% 15 sec is default, this seems long to me
+        HasValue -> string_to_integer(HasValue)
+    end,
+    case Val of 
+       {error, _} -> 15;
+       Else -> Else
     end.
 
 %% @private
@@ -79,11 +82,15 @@ get_rest_client_timeout_in_sec(Host) ->
 %% @end
 -spec get_rest_call_retry_attempt(Host::string()) -> integer() | {error, not_found}.
 get_rest_call_retry_attempt(Host) ->
-    case get_spark_auth_service_config(Host,rest_call_retry_attempt) of
+    Val = case get_spark_auth_service_config(Host,rest_call_retry_attempt) of
         {error, REASON} -> {error, REASON}; 
-    	HasValue -> string_to_integer(HasValue);
-        _ -> 0
-    end.
+    	HasValue -> string_to_integer(HasValue)
+    end,
+    case Val of 
+        {error, _Reason} -> 0;
+        Else -> Else
+    end
+    .
 
 %% @private
 %% @doc Get the CommunityId to BrandId maping from config
@@ -110,14 +117,19 @@ get_spark_auth_service_config(Host, TokenName) ->
 %% @doc convert string to integer
 %% @end
 -spec string_to_integer(StringValue::string()) -> integer() | {error, atom()}.
-string_to_integer(StringValue)->
+string_to_integer("") -> 
+	{error, cannot_convert};
+string_to_integer(StringValue) when is_list(StringValue)->
     case string:to_integer(StringValue) of
     	{Int, _} -> Int;
         Else -> {error, cannot_convert}
-    end.
-
+    end;
+string_to_integer(_) -> 
+	{error, cannot_convert}.
+	
 %%%%%% EUNIT %%%%%%%%%%%%%%%%%%
 -ifdef(TEST).
+string_to_integer_emptystring_test() ->[?assertEqual({error, cannot_convert}, string_to_integer("")), 
+				       ?assertEqual({error, cannot_convert}, string_to_integer(badtype))].
 
-
--endif
+-endif.
