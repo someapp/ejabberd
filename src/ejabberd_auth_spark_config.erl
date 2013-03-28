@@ -34,6 +34,7 @@
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("kernel/include/file.hrl").
+
 -endif.
 
 -include("ejabberd.hrl").
@@ -117,6 +118,15 @@ get_spark_auth_service_config(Host, TokenName) ->
 	Val   -> Val
     end.
 
+
+get_miniProfile_service_endpoint(Host)->
+    get_spark_auth_service_config(Host, auth_profile_miniProfile).
+
+get_isUserExists_service_endpoint(Host)->
+    get_spark_auth_service_config(Host, auth_profile_miniProfile).
+
+
+
 %% @private
 %% @doc convert string to integer
 %% @end
@@ -128,8 +138,7 @@ string_to_integer(StringValue) when is_list(StringValue)->
     	{Int, _} -> Int;
         _ -> {error, cannot_convert}
     end;
-string_to_integer(_) -> 
-       
+string_to_integer(_) ->        
 	{error, cannot_convert}.
 	
 %%%%%% EUNIT %%%%%%%%%%%%%%%%%%

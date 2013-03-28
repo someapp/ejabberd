@@ -18,6 +18,7 @@
 %% External exports
 -export[get_isUserData/1].
 
+
 %% @doc Retrieve isUserData from Jid
 %%      
 %% @end

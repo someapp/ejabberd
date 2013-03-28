@@ -180,14 +180,9 @@ is_user_exists(User, Host) ->
     LUser = jlib:nodeprep(User),
     LHost = jlib:nameprep(Host),
     UserHost = {LUser, LHost},
-    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
-    ResourceEndpoint = ejabberd_auth_spark_config:get_isUserExists_service_endpoint(Host),
-      
-    Val = case get_loginData(User, Host) of
-         {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
-         {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
-    end,
-    Url = restc:construct_url(ServiceEndpoint, Resource,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),
+    Fun =  fun ejabberd_auth_spark_config:get_isUserExists_service_endpoint end,
+    
+    Url = construct_restfull_call(Host, Fun, ),
 
     post_isUserExists_request(post, json, Url, [200], [], [""]).
 
@@ -253,8 +248,19 @@ check_auth_response(AuthStatus) ->
               {<<"Error">>,null},
               _IsPayingMember] -> {ok, authenticated};
              {error, Reason} -> {error, Reason};
-             ERROR -> ERROR
+             Error -> {error, Error}
      end.	
+
+check_isUser_response(IsUserStatus)->
+    case IsUserStatus of
+         [{<<"subscriptionStatus">>, "Member"}] -> {ok, subscriber};
+         [{<<"subscriptionStatus">>, _ >}] -> {ok, non_subscriber};
+         {error, Reason} > {error, Reason};
+         Error -> {error, Error}
+    end.
+
+
+
 
 
 %% @private
@@ -272,22 +278,30 @@ get_global_call_parameters(Host)->
 -spec authenticate_request(Host::string(), Email::string(), Password::string()) -> {ok, authenticated} | {error, term()} | term().
 authenticate_request(Host, User, Password) ->    
     {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
-   
-    ResourceEndpoint = ejabberd_auth_spark_config:get_authentication_service_endpoint(Host),
+    Url = construct_restfull_call(Host, ejabberd_auth_spark_config:get_authentication_service_endpoint), 
+    post_authenticate_request(post, json, Url, [200], [], [""]).
+
+
+%% @private
+%% @doc Construct the full service restful call 
+%% @end
+construct_restfull_call(Host, GetEndPoint, InsertUrlParameter) when is_function(GetEndPoint,1) andalso is_function(InsertUrlParameter,1)->
+    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
+    ResourceEndpoint = apply(GetEndPoint, [Host]),
     Val = case get_loginData(User, Host) of
          {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
          {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
     end,
-    Url = restc:construct_url(ServiceEndpoint, Resource,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),
-      
-  %  Resource = io_lib:format("brandid/~p/oauth2/accesstoken/application/~p",[BrandId,AppId]),
-  %  Url = restc:construct_url(ServiceEndpoint, Resource,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),   
-    post_authenticate_request(post, json, Url, [200], [], [""]).
+    InsertUrlParameter(ServiceEndpoint, ResourceEndpoint, QueryString).
+    %Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),
+
+
 
 %% @private
 %% @doc post the Authentication Http Post request to the api server. Return {ok, authentication}
 %% if the http code returns 200 and the Response body constains no error message and the Success Status is true 
 %% @end
+%% https://api.spark.net/brandId/1003/application/1000/member/133272351/status?client_secret=SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1
 -spec post_authenticate_request(Method::atom(), Type::atom(), Url::string(), Expect::[atom()], Headers::[term()], Body::[term()]) -> {ok, authenticated} | {error, term()} | term().
 post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
     
@@ -400,6 +414,14 @@ get_password_return_false_test() -> [?assertEqual(false, get_password("SomeUser"
 
 is_user_exists_test_return_true()-> [?assertEqual(true, is_user_exists("SomeUser", "SomeHost")),
 				     ?assertEqual(true, is_user_exists(anyValue, anyValue))].
+
+
+construct_restfull_call_test()->[?assertEqual(),
+				 
+
+
+                                ]
+
 
 -endif.
 
