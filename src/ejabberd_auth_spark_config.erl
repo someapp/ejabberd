@@ -84,9 +84,10 @@ get_rest_client_timeout_in_sec(Host) ->
 get_rest_call_retry_attempt(Host) ->
     Val = case get_spark_auth_service_config(Host,rest_call_retry_attempt) of
         {error, REASON} -> {error, REASON}; 
-    	HasValue -> string_to_integer(HasValue)
+    	HasValue -> HasValue
     end,
-    case Val of 
+    
+    case string_to_integer(Val) of 
         {error, _Reason} -> 0;
         Else -> Else
     end
@@ -122,7 +123,7 @@ string_to_integer("") ->
 string_to_integer(StringValue) when is_list(StringValue)->
     case string:to_integer(StringValue) of
     	{Int, _} -> Int;
-        Else -> {error, cannot_convert}
+        _ -> {error, cannot_convert}
     end;
 string_to_integer(_) -> 
 	{error, cannot_convert}.
