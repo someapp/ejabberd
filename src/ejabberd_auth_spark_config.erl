@@ -37,6 +37,7 @@
 -endif.
 
 -include("ejabberd.hrl").
+-include("ejabberd_config.hrl").
 
 
 %% @doc get the rest api authentication endpoint from config file 
@@ -70,7 +71,7 @@ get_spark_client_secrete(Host) ->
 get_rest_client_timeout_in_sec(Host) ->
     Val = case get_spark_auth_service_config(Host,rest_client_timeout_in_sec) of
        {error, REASON} -> {error, REASON}; 
-        HasValue -> string_to_integer(HasValue)
+        HasValue -> HasValue
     end,
     case Val of 
        {error, _} -> 15;
@@ -87,7 +88,7 @@ get_rest_call_retry_attempt(Host) ->
     	HasValue -> HasValue
     end,
     
-    case string_to_integer(Val) of 
+    case Val of 
         {error, _Reason} -> 0;
         Else -> Else
     end
@@ -109,8 +110,10 @@ get_spark_communityId_brandId_mapping(Host) ->
 %% @doc get the authentication endpoint rest client to talk to
 %% @end
 get_spark_auth_service_config(Host, TokenName) ->
+    io:fwrite("going to call get_local_option"),
     case ejabberd_config:get_local_option({TokenName, Host}) of
-	undefined -> {error, not_found};
+	undefined -> {error, undefined};
+        undef -> {error, undefined};
 	Val   -> Val
     end.
 
@@ -145,9 +148,9 @@ get_spark_client_secrete_test()-> [?assertEqual("nZGVVfj8dfaBPKsx_dmcRXQml8o5N-i
 
 get_rest_call_retry_attempt_test()->[?assertEqual("0", get_rest_call_retry_attempt("developer01"))].
 
-
 get_spark_application_id_test()-> [?assertEqual("1054", get_spark_application_id("developer01"))].
 
-
+get_spark_auth_service_config_test()-> [?assertEqual("spark", get_spark_auth_service_config("developer01", auth_method)), 
+					?assertEqual({error, undefined}, get_spark_auth_service_config("developer01", willnotfind))].
 
 -endif.
