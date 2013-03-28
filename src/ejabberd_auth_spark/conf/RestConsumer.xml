@@ -1,0 +1,263 @@
+<ResourceList>
+
+	<!-- hotlists-->
+	<Resource Type="Spark.Common.RestConsumer.Models.HotList.Favorite">
+		<Route Path="/brandId/{brandId}/hotlist/favorite/{memberId}" Methods="Post"></Route>
+		<Route Path="/brandId/{brandId}/hotlist/favorite/{memberId}/favoritemember/{favoriteMemberId}" Methods="Delete"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.HotList.HotListCounts">
+		<Route Path="/brandId/{brandId}/hotlist/counts/{memberId}" Methods="Get"></Route>
+	</Resource>
+
+	<Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.HotList.HotListEntry]">
+		<Route Path="/brandId/{brandId}/hotlist/{category}/{memberId}/pagesize/{pagesize}/pagenumber/{page}" Methods="Get"></Route>
+	</Resource>
+
+	<!-- profile -->
+	<Resource Type="Spark.Common.RestConsumer.Models.Profile.MiniProfile">
+		<Route Path="/brandId/{brandId}/profile/miniProfile/{targetMemberId}/{memberId}" Methods="Get"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Profile.FullProfile">
+		<Route Path="/brandId/{brandId}/profile/attributeset/fullProfile/{targetMemberId}/{memberId}" Methods="Get"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Profile.MemberStatus">
+		<Route Path="/brandId/{brandId}/application/{applicationId}/member/{memberId}/status" Methods="Get"></Route>
+	</Resource>
+
+	<Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.Photos.Photo]">
+		<Route Path="/brandId/{brandId}/profile/photos/{targetMemberId}/{memberId}" Methods="Get"></Route>   
+  </Resource>
+	
+  <Resource Type="Spark.Common.RestConsumer.Models.Photos.Photo">
+    <Route Path="/brandId/{brandId}/profile/photos/delete/{memberId}/{memberPhotoId}" Methods="Delete"></Route>
+  </Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Photos.PhotoCaptionUpdate">
+		<Route Path="/brandId/{brandId}/profile/photos/{memberId}/{memberPhotoId}" Methods="Put"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Photos.PhotoUpload">
+		<Route Path="brandId/{brandId}/profile/photos/uploadjson/{memberId}" Methods="Post"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Profile.AttributeRequest">
+		<Route Path="/brandId/{brandId}/profile/attributes/member/{memberId}" Methods="Get,Put"></Route>
+	</Resource>
+
+	<!-- mail -->
+	<Resource Type="Spark.Common.RestConsumer.Models.Mail.MailFolder">
+		<Route Path="/brandId/{brandId}/mail/folder/{memberId}/{folderId}/pagesize/{pagesize}/page/{page}" Methods="Get"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Mail.MailMessage">
+		<Route Path="/brandId/{brandId}/mail/message/{memberId}/{messageId}" Methods="Get"></Route>
+		<Route Path="/brandId/{brandId}/mail/message/{memberId}/folder/{currentFolderId}/message/{messageId}" Methods="Delete"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Mail.NewMessage">
+		<Route Path="/brandId/{brandId}/mail/message/{memberId}" Methods="Post"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Mail.NewTease">
+		<Route Path="/brandId/{brandId}/mail/tease/{memberId}" Methods="Post"></Route>
+	</Resource>
+
+	<!-- subscription -->
+	<Resource Type="Spark.Common.RestConsumer.Models.Subscription.PaymentUiPostDataRequest">
+		<Route Path="/brandId/{brandId}/subscription/PaymentUiRedirectData/{memberId}" Methods="Post"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Subscription.TransactionInfo">
+		<Route Path="/brandId/{brandId}/subscription/transactionInfo/{memberId}/{orderId}" Methods="Get"></Route>
+	</Resource>
+
+	<!-- applications -->
+	<Resource Type="Spark.Common.RestConsumer.Models.Applications.Application">
+		<Route Path="/brandId/{brandId}/apps/application" Methods="Post"></Route>
+		<Route Path="/brandId/{brandId}/apps/application/{applicationId}" Methods="Get,Put,Delete"></Route>
+	</Resource>
+
+	<!-- obsolete? -->
+	<Resource Type="Spark.Common.RestConsumer.Models.Member.Authenticate">
+		<Route Path="/brandId/{brandId}/authenticate/{email}/{password}" Methods="Get"></Route>
+	</Resource>
+
+	<!-- oauth -->
+	<Resource Type="Spark.Common.RestConsumer.Models.OAuth2.TokenRequestPassword">
+		<Route Path="/brandId/{brandId}/oauth2/accesstoken/application/{applicationId}" Methods="Post"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.OAuth2.TokenRefreshRequest">
+		<Route Path="/brandId/{brandId}/oauth2/accesstoken/application/{applicationId}/refreshtoken" Methods="Post"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.OAuth2.TokenRequestTrusted">
+		<Route Path="/brandId/{brandId}/oauth2/accesstoken/application/{applicationId}/trusted" Methods="Post"></Route>
+	</Resource>
+
+	<!-- content -->
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Content.BrandConfig.Brand">
+		<!--<Route Path="/content/brand/{brandUri}" Methods="Get"></Route>-->
+		<Route Path="/brandId/{brandId}/content/brand" Methods="Get"></Route>
+	</Resource>
+
+	<Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.Content.AttributeData.AttributeOption]">
+		<Route Path="/brandId/{brandId}/content/attributes/options/{attributeName}" Methods="Get"></Route>
+	</Resource>
+  
+	<Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.Mail.TeaseCategory]">
+		<Route Path="/brandId/{brandId}/content/teases/all" Methods="Get"></Route>
+	</Resource>
+
+	<Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.Mail.Tease]">
+		<Route Path="/brandId/{brandId}/content/teases/category/{teaseCategoryId}" Methods="Get"></Route>
+	</Resource>
+
+	<Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.Content.Region.Region]">
+		<Route Path="/brandId/{brandId}/content/region/citiesbyzipcode/{zipCode}" Methods="Get"></Route>
+	</Resource>
+
+  <Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.Content.Region.Country]">
+    <Route Path="/brandId/{brandId}/content/region/countries/{languageId}" Methods="Get"></Route>
+  </Resource>
+
+  <Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.Content.Region.State]">
+    <Route Path="/brandId/{brandId}/content/region/states/{languageId}/{countryRegionId}" Methods="Get"></Route>
+  </Resource>
+
+  <Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.Content.Region.City]">
+    <Route Path="/brandId/{brandId}/content/region/cities/{languageId}/{countryRegionId}/{stateRegionId}" Methods="Get"></Route>
+  </Resource>
+
+  <Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.Content.Region.ChildRegion]">
+    <Route Path="/brandId/{brandId}/content/region/childregions/{languageId}/{parentRegionId}" Methods="Get"></Route>
+  </Resource>
+
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Content.Setting">
+		<Route Path="/brandId/{brandId}/content/runtimesetting/{setting}" Methods="Get"></Route>
+	</Resource>
+	
+	<Resource Type="Spark.Common.RestConsumer.Models.Content.Promotion.AffiliateTrackingRequest">
+		<Route Path="/brandId/{brandId}/content/affiliatetracking" Methods="Post"></Route>
+	</Resource>
+
+  <Resource Type="System.Collections.Generic.List`1[Spark.Common.RestConsumer.Models.Content.Registration.Scenario]">
+    <Route Path="/brandId/{brandId}/content/registration/metadata" Methods="Get"></Route>
+  </Resource>
+
+  <Resource Type="System.String">
+    <Route Path="/brandId/{brandId}/content/registration/{DeviceType}/randomscenarioname" Methods="Get"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Content.Promotion.PromotionMappingResult">
+    <Route Path="/brandId/{brandId}/content/promotion/MapURLToPromo" Methods="Get"></Route>
+  </Resource>
+  
+  <Resource Type="Spark.Common.RestConsumer.Models.Content.Pixels.PixelResult">
+    <Route Path="/brandId/{brandId}/content/pixels" Methods="Get"></Route>
+  </Resource>
+
+  <!-- members online -->
+	<Resource Type="Spark.Common.RestConsumer.Models.MembersOnline.MembersOnlineCount">
+		<!-- todo: implement native types in restconsumer - here, an int is wrapped with a class -->
+		<Route Path="/brandId/{brandId}/membersonline/count" Methods="Get"></Route>
+	</Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.MembersOnline.MembersOnlineRequest">
+		<Route Path="/brandId/{brandId}/membersonline/member/{memberId}" Methods="Post,Delete"></Route>
+	</Resource>
+
+	<!-- registration -->
+	<Resource Type="Spark.Common.RestConsumer.Models.Member.Register">
+		<Route Path="/brandId/{brandId}/member/register" Methods="Post"></Route>
+	</Resource>
+  
+  <Resource Type="Spark.Common.RestConsumer.Models.Member.ExtendedRegisterRequest">
+    <Route Path="/brandId/{brandId}/member/registerextended" Methods="Post"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Content.RegistrationActivityRecording.RegistrationStart">
+    <Route Path="/brandId/{brandId}/member/recordregistrationstart" Methods="Post"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Content.RegistrationActivityRecording.RegistrationComplete">
+    <Route Path="/brandId/{brandId}/member/recordregistrationcomplete" Methods="Post"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Content.RegistrationActivityRecording.RegistrationCompleteWithRecaptureInfo">
+    <Route Path="/brandId/{brandId}/member/recordregistrationcompletewithrecaptureinfo" Methods="Post"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Content.RegistrationActivityRecording.RegistrationStep">
+    <Route Path="/brandId/{brandId}/member/recordregistrationstep" Methods="Post"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Content.RegistrationActivityRecording.RegistrationStepWithRecaptureInfo">
+    <Route Path="/brandId/{brandId}/member/recordregistrationstepwithrecaptureinfo" Methods="Post"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Content.RegistrationActivityRecording.RegistrationRecaptureInfo">
+    <Route Path="/brandId/{brandId}/member/getregistrationrecaptureinfo" Methods="Get"></Route>
+  </Resource>
+
+	<Resource Type="Spark.Common.RestConsumer.Models.Member.CompleteRegistrationResult">
+		<Route Path="/brandId/{brandId}/member/completeregistration/{memberId}" Methods="Get"></Route>
+	</Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Member.CompleteRegistrationWithIovationRequest">
+    <Route Path="/brandId/{brandId}/member/completeregistrationwithiovation/{memberId}" Methods="Post"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Content.Registration.AttributeValidationResult">
+    <Route Path="/brandId/{brandId}/member/validateregistrationattribute" Methods="Get"></Route>
+  </Resource>
+
+  <!-- search -->
+	<Resource Type="Spark.Common.RestConsumer.Models.Search.SearchPreferencesWithPaging">
+		<!--<Route Path="/search/results/{memberId}" Methods="Post"></Route>-->
+		<Route Path="/brandId/{brandId}/search/results/{memberId}" Methods="Post"></Route>
+	</Resource>
+
+	<!-- matches -->
+
+	<!-- not currently used, since this returns match results of the user's stored preferences, rather than quick search results with all params passed in 
+		however, match results may be implemented later -->
+	<Resource Type="Spark.Common.RestConsumer.Models.Search.SearchResults">
+		<Route Path="/brandId/{brandId}/match/results/{memberId}/pagesize/{pagesize}/page/{page}" Methods="Get"></Route>
+	</Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Session.Session">
+    <Route Path="/brandId/{brandId}/session/create" Methods="Get"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Session.SessionCreateRequestWithSessionId">
+    <Route Path="/brandId/{brandId}/session/createwithsessionid" Methods="Post"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Session.CreateSessionTrackingRequest">
+    <Route Path="/brandId/{brandId}/session/createsessiontracking" Methods="Post"></Route>
+  </Resource>
+
+  <Resource Type="Spark.Common.RestConsumer.Models.Session.SessionMemberResponse">
+    <Route Path="/brandId/{brandId}/session/getmember" Methods="Get"></Route>
+  </Resource>
+
+	<!-- PUTer is not currently used, but the GETter is used to pick initial search preferences shown to the user -->
+	<Resource Type="Spark.Common.RestConsumer.Models.Search.SearchPreferences">
+		<Route Path="/brandId/{brandId}/match/preferences/{memberId}" Methods="Get,Put"></Route>
+	</Resource>
+
+	<!-- authenticate -->
+	<!-- never used in oauth scenario
+	
+	<Resource Type="Authenticate">
+		<Route Path="/authenticate/{email}/{password}" Methods="Get"></Route>
+	</Resource>
+	-->
+</ResourceList>
+
