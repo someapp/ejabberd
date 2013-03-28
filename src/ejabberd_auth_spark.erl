@@ -285,6 +285,9 @@ authenticate_request(Host, User, Password) ->
 %% @private
 %% @doc Construct the full service restful call 
 %% @end
+%%  PostToUrl1 = restc:construct_url("https://api.spark.net","brandId/1003/application/1000/member/133272351/status",[{"client_secret","SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"})).                                                     "https://api.spark.net/brandId/1003/application/1000/member/133272351/status?client_secret=SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"
+
+%%  restc:request(get, json, PostToUrl1, [200],[]). 
 construct_restfull_call(Host, GetEndPoint, InsertUrlParameter) when is_function(GetEndPoint,1) andalso is_function(InsertUrlParameter,1)->
     {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
     ResourceEndpoint = apply(GetEndPoint, [Host]),
