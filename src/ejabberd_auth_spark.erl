@@ -187,12 +187,13 @@ is_user_exists(User, Host) ->
          {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
     end,
     case  ResourceEndpoint of 
-         {error, Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]),           
+         {error, Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]), 
+			    {error, Reason};           
          {"brandId/{brandId}/application/{applicationId}/member/{memberId}/status", [get]} -> {A, [Verb]}
     end,
     Response = restc:construct_url(ServiceEndpoint, ResourceEndpoint,["client_secret", ClientSecret]),
 
-    RETVAL = post_isUserExists_request(Verb, json, Url, [200], []).
+    RETVAL = post_isUserExists_request(Verb, json, Url, [200], []),
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.     
 
@@ -261,7 +262,7 @@ check_isUser_response(IsUserStatus)->
     case IsUserStatus of
          [{<<"subscriptionStatus">>, "Member"}] -> {ok, subscriber};
          [{<<"subscriptionStatus">>, _ >}] -> {ok, non_subscriber};
-         {error, Reason} > {error, Reason};
+         {error, Reason} -> {error, Reason}
          Error -> {error, Error}
     end.
 
