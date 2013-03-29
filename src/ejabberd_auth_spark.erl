@@ -180,22 +180,25 @@ is_user_exists(User, Host) ->
     LUser = jlib:nodeprep(User),
     LHost = jlib:nameprep(Host),
     UserHost = {LUser, LHost},
-    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
+    {{ServiceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
     ResourceEndpoint = ejabberd_auth_spark_config:get_isUserExists_service_endpoint(Host),
     Val = case spark_parse_loginData:get_loginData(User, Host) of
          {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
          {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
     end,
-    case  ResourceEndpoint of 
-         {error, Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]), 
-			    {error, Reason};           
-         {"brandId/{brandId}/application/{applicationId}/member/{memberId}/status", [get]} -> {A, [Verb]}
+    {Url, Verb} = case  ResourceEndpoint of 
+         {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
+			    {error, _Reason};           
+	 {EndPoint, Verb} -> {EndPoint, Verb}
+%%         {"brandId/{brandId}/application/{applicationId}/member/{memberId}/status", [get]} -> {A, [Verb]}
     end,
-    Response = restc:construct_url(ServiceEndpoint, ResourceEndpoint,["client_secret", ClientSecret]),
-
-    RETVAL = post_isUserExists_request(Verb, json, Url, [200], []),
-    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
-    RETVAL.     
+    _Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint,["client_secret", ClientSecret]),
+    Response = case {Url, Verb} of
+         {error, _Reason1} -> {error, _Reason};
+         {Url, Verb} ->  post_isUserExists_request(Verb, json, _Url, [200], [])
+    end,
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Response]),
+    Response.     
 
 %% @doc Remove user.This function is not allowed, this case taken by mainsite.
 %% @end
@@ -281,9 +284,30 @@ get_global_call_parameters(Host)->
 %% @end
 -spec authenticate_request(Host::string(), Email::string(), Password::string()) -> {ok, authenticated} | {error, term()} | term().
 authenticate_request(Host, User, Password) ->    
-    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
-    Url = construct_restfull_call(Host, ejabberd_auth_spark_config:get_authentication_service_endpoint), 
-    post_authenticate_request(post, json, Url, [200], [], [""]).
+    {{ServiceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
+    ResourceEndpoint = ejabberd_auth_spark_config:get_authentication_service_endpoint(Host),
+    Val = case spark_parse_loginData:get_loginData(User, Host) of
+         {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
+         {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
+    end,
+    {Url, Verb} = case  ResourceEndpoint of 
+         {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
+			    {error, _Reason};           
+	 {EndPoint, Verb} -> {EndPoint, Verb}
+%%         {"brandId/{brandId}/application/{applicationId}/member/{memberId}/status", [get]} -> {A, [Verb]}
+    end,
+    _Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint,["client_secret", ClientSecret]),
+    Response = case {Url, Verb} of
+         {error, _Reason1} -> {error, _Reason};
+         {Url, Verb} -> post_authenticate_request(post, json, Url, [200], [], [""])
+    end,
+    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Response]),
+    Response
+
+
+
+
+.
 
 
 %% @private
@@ -334,7 +358,7 @@ post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
          Else -> Else
     end.
 
-post_isUserExists_request(Method, Type, Url, Expect, Headers, Body) ->
+post_isUserExists_request(Method, Type, Url, Expect, Headers) ->
     ResponseBody = 
        case restc:request(Method, Type, Url, [?AUTHENTICATED], Headers) of
 	    {ok, Status, H, B} -> {ok, Status, H, B};
