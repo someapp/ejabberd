@@ -27,8 +27,8 @@
 %% @doc Retrieve login Data from Jid
 %%      returns the {brandid, integer}, {memberid, integer} or {error, Reason}
 %% @end
--spec get_loginData(UserName::string(), Host::string())-> {error, {brandid, atom()}, {memberid, atom()}, atom()}| {ok, {atom(), integer},  {atom(), integer()}}.
-get_loginData("",Host) ->
+-spec get_loginData(UserName::string(), Host::string())-> {error, {brandid, atom()}, {memberid, atom()}, atom()}| {ok, {atom(), integer()},  {atom(), integer()}}.
+get_loginData("",_) ->
   {error, user_missing}
 ;
 get_loginData(UserName, Host) when (is_list(UserName)) ->
@@ -52,20 +52,18 @@ get_loginData(_,_) ->
 %% @private
 %% @doc Get the CommunityId to BrandId maping from config
 %% @end
--spec get_spark_communityId_brandId_mapping(Host::string()) -> {tuple()} | {error, not_found}.
-get_spark_communityId_brandId_mapping(Host) ->
-    case ejabberd_auth_spark:get_spark_auth_service_config(Host,community2brandId) of
-       {error, REASON} -> {error, REASON}; 	
-       HasValue -> HasValue
-    end. 
+%-spec get_spark_communityId_brandId_mapping(Host::string()) -> {tuple()} | {error, not_found}.
+%get_spark_communityId_brandId_mapping(Host) ->
+%    case ejabberd_auth_spark:get_spark_auth_service_config(Host,community2brandId) of
+%       {error, REASON} -> {error, REASON}; 	
+%       HasValue -> HasValue
+%    end. 
 
 %% 
 %% @doc Retrieve login Data from Jid
 %%      returns the {brandid, integer}, {memberid, integer} or {error, Reason}
 %% @end
--spec get_brandId_from_communityId([CommunityId::integer(),MemberId::integer()], Host::string())-> {error, tuple(), term()} | {ok, {atom(), integer},  {atom(), integer()}}.
-get_brandId_from_communityId({error, Reason}, _) -> 
-  {error, {brandid, not_found}, {memberid, not_found}, Reason}; 
+%-spec get_brandId_from_communityId([CommunityId::integer(),MemberId::integer()], Host::string())-> {error, tuple(), term()} | {ok, {atom(), integer()},  {atom(), integer()}}.
 get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 0)->
    Ids = case ejabberd_auth_spark:get_spark_auth_service_config({community2brandId,Host}) of
              {error, Reason} -> {error, Reason};             
@@ -80,6 +78,8 @@ get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 
         {ok, {brandid, C}} -> {ok, {brandid, C}, {memberId, MemberId}};
         {error, Reason} -> {error, {brandid, not_found}, {memberId, not_found}, Reason}
    end;
+get_brandId_from_communityId({error, Reason}, _) -> 
+  {error, {brandid, not_found}, {memberid, not_found}, Reason}; 
 get_brandId_from_communityId(_,_) -> 
   {error, {brandid, not_found}, {memberid, not_found}, mal_formed}.
 

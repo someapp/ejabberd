@@ -1,59 +1,19 @@
-# $Id$
+.PHONY: deps
 
-CC = 
-CFLAGS = 
-CPPFLAGS = 
-LDFLAGS = 
-LIBS =  
+all: deps compile
+./rebar skip_deps=true escriptize
 
-ERLANG_CFLAGS = 
-ERLANG_LIBS = 
+deps:
+./rebar get-deps
 
-# Assume Linux-style dynamic library flags
-DYNAMIC_LIB_CFLAGS = -
-ifeq ($(shell uname),Darwin)
-    DYNAMIC_LIB_CFLAGS = 
-endif
-ifeq ($(shell uname),SunOs)
-    DYNAMIC_LIB_CFLAGS = 
-endif
-
-
-EFLAGS += -I ..
-EFLAGS += -pz ..
-
-# make debug=true to compile Erlang module with debug informations.
-ifdef debug
-	EFLAGS+=+debug_info
-endif
-
-ERLSHLIBS = 
-OUTDIR = ..
-SOURCES = $(wildcard *.erl)
-BEAMS = $(addprefix $(OUTDIR)/,$(SOURCES:.erl=.beam))
-
-all:    $(BEAMS) $(ERLSHLIBS)
-
-$(OUTDIR)/%.beam:       %.erl
-	/usr/local/bin/erlc -W $(EFLAGS) -o $(OUTDIR) $<
-
-#all:	$(ERLSHLIBS)
-#	erl -s make all report "{outdir, \"..\"}" -noinput -s erlang halt
-
-$(ERLSHLIBS):	../%.so:	%.c
-	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) \
-		$(subst ../,,$(subst .so,.c,$@)) \
-		$(LIBS) \
-		$(ERLANG_CFLAGS) \
-		$(ERLANG_LIBS) \
-		-o $@ \
-		$(DYNAMIC_LIB_CFLAGS)
+compile: deps
+./rebar compile
 
 clean:
-	rm -f $(BEAMS) $(ERLSHLIBS)
+@./rebar clean
 
 distclean: clean
-	rm -f Makefile
+@rm -rf basho_bench deps
 
-TAGS:
-	etags *.erl
+results:
+priv/summary.r -i tests/current
