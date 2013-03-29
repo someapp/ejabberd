@@ -70,13 +70,13 @@ get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 
              Val -> Val
          end,
    Val1 = case Ids of
-        {error, Reason} -> {error, Reason};
+        {error, Reason1} -> {error, Reason1};
         Val2 -> find_value(CommunityId, Ids)
    end,
    BrandId = extract_brandId(Val1),
    case BrandId of
         {ok, {brandid, C}} -> {ok, {brandid, C}, {memberId, MemberId}};
-        {error, Reason} -> {error, {brandid, not_found}, {memberId, not_found}, Reason}
+        {error, Reason2} -> {error, {brandid, not_found}, {memberId, not_found}, Reason2}
    end;
 get_brandId_from_communityId({error, Reason}, _) -> 
   {error, {brandid, not_found}, {memberid, not_found}, Reason}; 
