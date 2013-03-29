@@ -27,7 +27,7 @@
 %% @doc Retrieve login Data from Jid
 %%      returns the {brandid, integer}, {memberid, integer} or {error, Reason}
 %% @end
--spec get_loginData(UserName::string())-> {error, {brandid, atom()}, {memberid, atom()}, atom()}| {ok, {atom(), integer},  {atom(), integer()}}.
+-spec get_loginData(UserName::string(), Host::string())-> {error, {brandid, atom()}, {memberid, atom()}, atom()}| {ok, {atom(), integer},  {atom(), integer()}}.
 get_loginData("",Host) ->
   {error, user_missing}
 ;

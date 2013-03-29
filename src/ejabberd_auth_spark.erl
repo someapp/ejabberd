@@ -182,7 +182,7 @@ is_user_exists(User, Host) ->
     UserHost = {LUser, LHost},
     {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
     ResourceEndpoint = ejabberd_auth_spark_config:get_isUserExists_service_endpoint(Host),
-    Val = case get_loginData(User, Host) of
+    Val = case spark_parse_loginData:get_loginData(User, Host) of
          {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
          {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
     end,
@@ -261,8 +261,8 @@ check_auth_response(AuthStatus) ->
 check_isUser_response(IsUserStatus)->
     case IsUserStatus of
          [{<<"subscriptionStatus">>, "Member"}] -> {ok, subscriber};
-         [{<<"subscriptionStatus">>, _ >}] -> {ok, non_subscriber};
-         {error, Reason} -> {error, Reason}
+         [{<<"subscriptionStatus">>, _ }] -> {ok, non_subscriber};
+         {error, Reason} -> {error, Reason};
          Error -> {error, Error}
     end.
 
@@ -373,8 +373,8 @@ string_to_integer(StringValue)->
 %%%%%% EUNIT %%%%%%%%%%%%%%%%%%
 -ifdef(TEST).
 
-get_spark_authservice_endpoint_test()->[?assertEqual({error, endpoint_notfound}, get_spark_authservice_endpoint("BadHost")),
-					?assertEqual("https://api.spark.test", get_spark_authservice_endpoint("GoodHost"))].
+%%get_spark_authservice_endpoint_test()->[?assertEqual({error, endpoint_notfound}, get_spark_authservice_endpoint("BadHost")),
+%%					?assertEqual("https://api.spark.test", get_spark_authservice_endpoint("GoodHost"))].
 
 get_password_string_test()-> [?assertEqual("******", get_password_string("Password")),
 		       ?assertEqual("******", get_password_string(anyValue))].
@@ -415,14 +415,6 @@ get_password_return_false_test() -> [?assertEqual(false, get_password("SomeUser"
 
 is_user_exists_test_return_true()-> [?assertEqual(true, is_user_exists("SomeUser", "SomeHost")),
 				     ?assertEqual(true, is_user_exists(anyValue, anyValue))].
-
-
-construct_restfull_call_test()->[?assertEqual(),
-				 
-
-
-                                ]
-
 
 -endif.
 
