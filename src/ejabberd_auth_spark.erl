@@ -254,6 +254,10 @@ store_type() ->
           	  _, _, _, _, _, _, _, _,
           	 {<<"subscriptionStatus">>,<<"Member">>},
           	 _, _, _}]} -> {ok, authenticated};
+    		[{<<"id">>,MemberId}, _, _, _, _, _, _,
+          	  _, _, _, _, _, _, _, _,
+          	 {<<"subscriptionStatus">>,_},
+          	 _, _, _}]} -> {ok, non_subscriber};
 		{error, Reason} -> {error, Reason};
  		Error -> {error, Error}
        end.
