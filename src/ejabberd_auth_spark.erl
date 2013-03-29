@@ -179,26 +179,36 @@ is_user_exists(User, Host) ->
     %UserHost = {LUser, LHost},
     {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(LHost),
     ResourceEndpoint = ejabberd_auth_spark_config:get_isUserExists_service_endpoint(LHost),
+
     Val = case spark_parse_loginData:get_loginData(LUser, LHost) of
-         {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
+         {ok, {brandid, BrandId}, {memberid, MemberId}} -> {ok, {brandid, BrandId}, {memberid, MemberId}};  
+         {error, _, _, Reason} -> {error, Reason};
          {error, Reason1} -> {error, Reason1};
-         {ok, {brandid, BrandId}, {memberid, MemberId}} -> {ok, {brandid, BrandId}, {memberid, MemberId}}                              
+         _ ->   {error, not_found}                         
     end,
     {Url, Verb1} = case  ResourceEndpoint of 
+         {EndPoint, Verb} -> {EndPoint, Verb};
          {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
 			    {error, _Reason};           
-	 {EndPoint, Verb} -> {EndPoint, Verb}
+	 _ -> {error, not_found}
     end,
-    {ok, {brandid, BrandId}, {memberid, MemberId}} = Val,
+   
+    Response =  
+    case Val of
+      {ok, {brandid, BrandId1}, {memberid, MemberId1}} ->
+                                 ResourceEndpoint1 = re:replace(Url, "{brandId}", BrandId1, [global, {return, list}]),
+   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", AppId, [global, {return, list}]),
+    				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId1, [global, {return, list}]),
+    				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["client_secret", ClientSecret]),
+    				case {Url, Verb1} of
+         		             {Url, Verb2} ->  post_isUserExists_request(Verb2, json, _Url, [200], []);
+                                     {error, _Reason1} -> {error, _Reason1};
+         		             _ -> {error, not_found}
+    				end;
+      {error, _Reason1}  -> {error, _Reason1};
+      Else -> {error, Else}
+    end,
 
-    ResourceEndpoint1 = re:replace(ResourceEndpoint, "{brandId}", BrandId, [global, {return, list}]),
-    ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", AppId, [global, {return, list}]),
-    ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{member}", MemberId, [global, {return, list}]),
-    _Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["client_secret", ClientSecret]),
-    Response = case {Url, Verb1} of
-         {error, _Reason1} -> {error, _Reason1};
-         {Url, Verb} ->  post_isUserExists_request(Verb, json, _Url, [200], [])
-    end,
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Response]),
     Response.     
 
@@ -288,27 +298,35 @@ authenticate_request(Host, User, Password) ->
     {{serviceEndpoint, BaseServiceEndpoint}, {appId, _AppId}, {client_secret, _ClientSecret}} = get_global_call_parameters(Host),
     ResourceEndpoint = ejabberd_auth_spark_config:get_authentication_service_endpoint(Host),
     Val = case spark_parse_loginData:get_loginData(User, Host) of
+	 {ok, {brandid, BrandId}, {memberid, MemberId}} -> {ok, {brandid, BrandId}, {memberid, MemberId}};
          {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
-         {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
+         {error, _, _, Reason1} -> {error, Reason1};
+         {error, Reason2} -> {error, Reason2};
+         _ -> {error, not_found}                           
     end,
-    A  = case  ResourceEndpoint of 
+    {Url, Verb1}  = case  ResourceEndpoint of 
+	 {EndPoint, Verb} -> {EndPoint, Verb};
          {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
 			    {error, _Reason};           
-	 {EndPoint, Verb} -> {EndPoint, Verb}
+	 _ -> {error, _Reason}
     end,
     
-   {ok, {brandid, BrandId}, {memberid, MemberId}} = Val,
-
-
-    ResourceEndpoint1 = re:replace(ResourceEndpoint, "{brandId}", BrandId, [global, {return, list}]),
-    ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", MemberId, [global, {return, list}]),
-    ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId, [global, {return, list}]),
-    _Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["access_token", Password]),
-
-    Response = case A of
-         {error, _Reason1} -> {error, _Reason1};
-         {Url, Verb} -> post_authenticate_request(post, json, Url, [200], [], [""])
+    Response =  
+    case Val of
+      {ok, {brandid, BrandId1}, {memberid, MemberId1}} ->
+                                 ResourceEndpoint1 = re:replace(Url, "{brandId}", BrandId1, [global, {return, list}]),
+   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", MemberId1, [global, {return, list}]),
+    				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId1, [global, {return, list}]),
+    				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["access_token", Password]),
+    				case {Url, Verb1} of
+                                     {Url, Verb2} ->  post_authenticate_request(Verb2, json, _Url, [200], [], [""])
+         		             {error, _Reason1} -> {error, _Reason1};
+         		             _ ->  {error, not_found}
+    				end;
+      {error, _Reason1}  -> {error, _Reason1};
+      Else -> {error, Else}
     end,
+
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Response]),
     Response.
 
