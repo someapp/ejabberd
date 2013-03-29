@@ -26,6 +26,7 @@
 	get_rest_client_timeout_in_sec/1, 
 	get_rest_call_retry_attempt/1,
 	get_spark_communityId_brandId_mapping/1
+  %%      url_token_replace/3
 	]).
 %TODO change it to true at end of cycle
 -define(TEST, true).
@@ -47,15 +48,11 @@
 get_spark_authservice_endpoint(Host) ->
     get_spark_auth_service_config(Host, spark_auth_endpoint). 
 
-%% @private
 %% @doc get the rest applicationId from config file
 -spec get_spark_application_id(Host::string()) -> string() | {error, not_found}.
 get_spark_application_id(Host) ->
     get_spark_auth_service_config(Host, spark_application_id). 
    
-
-
-%% @private
 %% @doc get the rest client secrete from config file 
 %% @end
 -spec get_spark_client_secrete(Host::string()) -> integer() | {error, not_found}.
@@ -65,7 +62,6 @@ get_spark_client_secrete(Host) ->
        HasValue -> string_to_integer(HasValue)
     end. 
 
-%% @private
 %% @doc get the rest client time out value in seconds from config file 
 %% @end
 -spec get_rest_client_timeout_in_sec(Host::string()) -> integer() | {error, not_found}.
@@ -79,7 +75,6 @@ get_rest_client_timeout_in_sec(Host) ->
        Else -> Else
     end.
 
-%% @private
 %% @doc get the rest client call retry attempt from config file
 %% @end
 -spec get_rest_call_retry_attempt(Host::string()) -> integer() | {error, not_found}.
@@ -95,7 +90,6 @@ get_rest_call_retry_attempt(Host) ->
     end
     .
 
-%% @private
 %% @doc Get the CommunityId to BrandId maping from config
 %% @end
 -spec get_spark_communityId_brandId_mapping(Host::string()) -> {tuple()} | {error, not_found}.
@@ -107,7 +101,6 @@ get_spark_communityId_brandId_mapping(Host) ->
 
 
 
-%% @private
 %% @doc get the authentication endpoint rest client to talk to
 %% @end
 get_spark_auth_service_config(Host, TokenName) ->
@@ -118,13 +111,23 @@ get_spark_auth_service_config(Host, TokenName) ->
 	Val   -> Val
     end.
 
-
+%% @doc get the mini profile endpoint rest client to talk to
+%% @end
 get_miniProfile_service_endpoint(Host)->
     get_spark_auth_service_config(Host, auth_profile_miniProfile).
 
+%% @doc get the isUserExists endpoint rest client to talk to
+%% @end
 get_isUserExists_service_endpoint(Host)->
     get_spark_auth_service_config(Host, auth_profile_miniProfile).
 
+
+%% @doc get the Url token replace
+%% @end
+%%-spec url_token_replace(Url::string(), TokenList::[string()], ReplaceBy::[string()]) -> {error, atom()} | string().
+%%url_toke
+%%url_token_replace(Url, TokenList, ReplaceBy) when is_list(TokenList) andalso when is_list(ReplaceBy) ->
+    
 
 
 %% @private

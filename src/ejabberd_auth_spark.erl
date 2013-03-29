@@ -192,7 +192,10 @@ is_user_exists(User, Host) ->
 	 {EndPoint, Verb} -> {EndPoint, Verb}
 %%         {"brandId/{brandId}/application/{applicationId}/member/{memberId}/status", [get]} -> {A, [Verb]}
     end,
-    _Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint,["client_secret", ClientSecret]),
+    ResourceEndpoint1 = re:replace(ResourceEndpoint, "{brandId}", BrandId, [global, {return, list}]),
+    ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", AppId, [global, {return, list}]),
+    ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{member}", MemberId, [global, {return, list}]),
+    _Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint3,["client_secret", ClientSecret]),
     Response = case {Url, Verb} of
          {error, _Reason1} -> {error, _Reason};
          {Url, Verb} ->  post_isUserExists_request(Verb, json, _Url, [200], [])
