@@ -180,13 +180,19 @@ is_user_exists(User, Host) ->
     LUser = jlib:nodeprep(User),
     LHost = jlib:nameprep(Host),
     UserHost = {LUser, LHost},
-    Fun =  fun ejabberd_auth_spark_config:get_isUserExists_service_endpoint end,
-    
-    Url = construct_restfull_call(Host, Fun, ),
+    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
+    ResourceEndpoint = ejabberd_auth_spark_config:get_isUserExists_service_endpoint(Host),
+    Val = case get_loginData(User, Host) of
+         {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
+         {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
+    end,
+    case  ResourceEndpoint of 
+         {error, Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]),           
+         {"brandId/{brandId}/application/{applicationId}/member/{memberId}/status", [get]} -> {A, [Verb]}
+    end,
+    Response = restc:construct_url(ServiceEndpoint, ResourceEndpoint,["client_secret", ClientSecret]),
 
-    post_isUserExists_request(post, json, Url, [200], [], [""]).
-
-    RETVAL = {error, not_implemented},
+    RETVAL = post_isUserExists_request(Verb, json, Url, [200], []).
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.     
 
@@ -260,9 +266,6 @@ check_isUser_response(IsUserStatus)->
     end.
 
 
-
-
-
 %% @private
 %% @doc Get Parameters to make restful call
 %% @end
@@ -288,14 +291,15 @@ authenticate_request(Host, User, Password) ->
 %%  PostToUrl1 = restc:construct_url("https://api.spark.net","brandId/1003/application/1000/member/133272351/status",[{"client_secret","SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"})).                                                     "https://api.spark.net/brandId/1003/application/1000/member/133272351/status?client_secret=SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"
 
 %%  restc:request(get, json, PostToUrl1, [200],[]). 
-construct_restfull_call(Host, GetEndPoint, InsertUrlParameter) when is_function(GetEndPoint,1) andalso is_function(InsertUrlParameter,1)->
-    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
-    ResourceEndpoint = apply(GetEndPoint, [Host]),
-    Val = case get_loginData(User, Host) of
-         {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
-         {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
-    end,
-    InsertUrlParameter(ServiceEndpoint, ResourceEndpoint, QueryString).
+%%   construct_restfull_call(Host, GetEndPoint) when is_function(GetEndPoint,1)>
+%%      {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
+%%      ResourceEndpoint = apply(GetEndPoint, [Host]),
+%%      Val = case get_loginData(User, Host) of
+%%           {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
+%%           {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
+%%      end,
+%%      {{service_endpoint, ResourceEndpoint}, Val}.
+    %%InsertUrlParameter(ServiceEndpoint, ResourceEndpoint, QueryString).
     %Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),
 
 
@@ -330,26 +334,19 @@ post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
     end.
 
 post_isUserExists_request(Method, Type, Url, Expect, Headers, Body) ->
-    
-    RetValue = 
-       case restc:request(Method, Type, Url, [?AUTHENTICATED], Headers, Body) of
+    ResponseBody = 
+       case restc:request(Method, Type, Url, [?AUTHENTICATED], Headers) of
 	    {ok, Status, H, B} -> {ok, Status, H, B};
-            {error, Status, _H, _B} -> {error, Status, _H, _B}; 
+            {error, Status, _H, _B} ->     
+                                  ?ERROR_MSG("RestCall failed with status ~p ~p~n", [?CURRENT_FUNCTION_NAME(), RetValue]), 
+                                  {error, Status, _H, _B}; 
             Status -> Status
        end,
-    ?ERROR_MSG("RestCall failed with status ~p ~p~n", 
-	    [?CURRENT_FUNCTION_NAME(), RetValue]),    
-   
-    Status = case RetValue of
-	    {ok, ?AUTHENTICATED, _, ResponseBody} -> check_auth_response(ResponseBody);
-            ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
-            [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
-		     {error, bad_responsebody}
-    end,
-    case Status of 
-         {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody} -> check_auth_response(Status);
-         {error, Reason} -> {error, Reason};
-         Else -> Else
+    case RetValue of
+	{ok, ?AUTHENTICATED, _, ResponseBody} -> check_isUser_response(ResponseBody);
+        ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
+                         [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
+		         {error, bad_responsebody}
     end.   
 
 %% @private
