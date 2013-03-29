@@ -105,8 +105,8 @@ check_password(User, Host, Password) when is_list(Password) ->
     ?DEBUG("~p with user ~p host ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
     LUser = jlib:nodeprep(User),
     LHost = jlib:nameprep(Host),
-    UserHost = {LUser, LHost},  
-    RETVAL =  case authenticate_request(Host, User, Password) of
+    %UserHost = {LUser, LHost},  
+    RETVAL =  case authenticate_request(LHost, LUser, Password) of
                    {ok, authenticated} -> true;
                    {error, REASON} -> 
                                     ?INFO_MSG("Authenication failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, REASON}]),
@@ -176,11 +176,12 @@ is_user_exists(User, Host) ->
     ?DEBUG("~p with user ~p host ~p~~n", [?CURRENT_FUNCTION_NAME(), User, Host]),
     LUser = jlib:nodeprep(User),
     LHost = jlib:nameprep(Host),
-    UserHost = {LUser, LHost},
-    {{ServiceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
-    ResourceEndpoint = ejabberd_auth_spark_config:get_isUserExists_service_endpoint(Host),
-    Val = case spark_parse_loginData:get_loginData(User, Host) of
+    %UserHost = {LUser, LHost},
+    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(LHost),
+    ResourceEndpoint = ejabberd_auth_spark_config:get_isUserExists_service_endpoint(LHost),
+    Val = case spark_parse_loginData:get_loginData(LUser, LHost) of
          {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
+         {error, Reason1} -> {error, Reason1};
          {ok, {brandid, BrandId}, {memberid, MemberId}} -> {ok, {brandid, BrandId}, {memberid, MemberId}}                              
     end,
     {Url, Verb1} = case  ResourceEndpoint of 
@@ -193,7 +194,7 @@ is_user_exists(User, Host) ->
     ResourceEndpoint1 = re:replace(ResourceEndpoint, "{brandId}", BrandId, [global, {return, list}]),
     ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", AppId, [global, {return, list}]),
     ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{member}", MemberId, [global, {return, list}]),
-    _Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint3,["client_secret", ClientSecret]),
+    _Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["client_secret", ClientSecret]),
     Response = case {Url, Verb1} of
          {error, _Reason1} -> {error, _Reason1};
          {Url, Verb} ->  post_isUserExists_request(Verb, json, _Url, [200], [])
@@ -284,7 +285,7 @@ get_global_call_parameters(Host)->
 %% @end
 -spec authenticate_request(Host::string(), Email::string(), Password::string()) -> {ok, authenticated} | {error, term()} | term().
 authenticate_request(Host, User, Password) ->    
-    {{ServiceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
+    {{serviceEndpoint, BaseServiceEndpoint}, {appId, _AppId}, {client_secret, _ClientSecret}} = get_global_call_parameters(Host),
     ResourceEndpoint = ejabberd_auth_spark_config:get_authentication_service_endpoint(Host),
     Val = case spark_parse_loginData:get_loginData(User, Host) of
          {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
@@ -295,12 +296,16 @@ authenticate_request(Host, User, Password) ->
 			    {error, _Reason};           
 	 {EndPoint, Verb} -> {EndPoint, Verb}
     end,
+    
+   {ok, {brandid, BrandId}, {memberid, MemberId}} = Val,
+
+
     ResourceEndpoint1 = re:replace(ResourceEndpoint, "{brandId}", BrandId, [global, {return, list}]),
     ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", MemberId, [global, {return, list}]),
     ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId, [global, {return, list}]),
-    _Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint3,["access_token", Password]),
+    _Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["access_token", Password]),
 
-    Response = case A  of
+    Response = case A of
          {error, _Reason1} -> {error, _Reason1};
          {Url, Verb} -> post_authenticate_request(post, json, Url, [200], [], [""])
     end,
@@ -317,7 +322,7 @@ authenticate_request(Host, User, Password) ->
 post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
     
     RetValue = 
-       case restc:request(Method, Type, Url, [?AUTHENTICATED], Headers, Body) of
+       case restc:request(Method, Type, Url, [Expect], Headers, Body) of
 	    {ok, Status, H, B} -> {ok, Status, H, B};
             {error, Status, _H, _B} -> {error, Status, _H, _B}; 
             Status -> Status
@@ -325,21 +330,21 @@ post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
     ?ERROR_MSG("RestCall failed with status ~p ~p~n", 
 	    [?CURRENT_FUNCTION_NAME(), RetValue]),    
    
-    Status = case RetValue of
+    Status1 = case RetValue of
 	    {ok, ?AUTHENTICATED, _, ResponseBody} -> check_auth_response(ResponseBody);
             ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
             [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
 		     {error, bad_responsebody}
     end,
-    case Status of 
-         {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody} -> check_auth_response(Status);
+    case Status1 of 
+         {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody1} -> check_auth_response(ResponseBody1);
          {error, Reason} -> {error, Reason};
          Else -> Else
     end.
 
 post_isUserExists_request(Method, Type, Url, Expect, Headers) ->
     RetVal = 
-       case restc:request(Method, Type, Url, [?AUTHENTICATED], Headers) of
+       case restc:request(Method, Type, Url, Expect, Headers) of
 	    {ok, Status, H, B} -> {ok, Status, H, B};
             {error, Status, _H, _B} ->     
                                   ?ERROR_MSG("RestCall failed with status ~p ~p~n", [?CURRENT_FUNCTION_NAME(), Status]), 
