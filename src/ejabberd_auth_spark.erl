@@ -183,7 +183,7 @@ is_user_exists(User, Host) ->
          {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
          {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
     end,
-    {Url, Verb} = case  ResourceEndpoint of 
+    {Url, Verb1} = case  ResourceEndpoint of 
          {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
 			    {error, _Reason};           
 	 {EndPoint, Verb} -> {EndPoint, Verb}
@@ -192,7 +192,7 @@ is_user_exists(User, Host) ->
     ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", AppId, [global, {return, list}]),
     ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{member}", MemberId, [global, {return, list}]),
     _Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint3,["client_secret", ClientSecret]),
-    Response = case {Url, Verb} of
+    Response = case {Url, Verb1} of
          {error, _Reason1} -> {error, _Reason};
          {Url, Verb} ->  post_isUserExists_request(Verb, json, _Url, [200], [])
     end,
@@ -245,16 +245,16 @@ store_type() ->
 %%      anything else is error and considered authentication error and failed.
 %% @end
 -spec check_auth_response(AuthStatus::[tuple()]) -> {ok, authenticated} | {error, term()} | term().
-   check_auth_response(AuthStatus, MemberId) ->
+check_auth_response(AuthStatus) ->
        case AuthStatus of
-    		[{<<"id">>,MemberId}, _, _, _, _, _, _,
+    		[_, _, _, _, _, _, _,
           	  _, _, _, _, _, _, _, _,
           	 {<<"subscriptionStatus">>,<<"Member">>},
-          	 _, _, _}]} -> {ok, authenticated};
-    		[{<<"id">>,MemberId}, _, _, _, _, _, _,
+          	 _, _, _] -> {ok, authenticated};
+    		[_, _, _, _, _, _, _,
           	  _, _, _, _, _, _, _, _,
           	 {<<"subscriptionStatus">>,_},
-          	 _, _, _}]} -> {ok, non_subscriber};
+          	 _, _, _] -> {ok, non_subscriber};
 		{error, Reason} -> {error, Reason};
  		Error -> {error, Error}
        end.
