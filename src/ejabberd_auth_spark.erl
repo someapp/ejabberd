@@ -187,9 +187,9 @@ is_user_exists(User, Host) ->
          _ ->   {error, not_found}                         
     end,
     {Url, Verb1} = case  ResourceEndpoint of 
-         {EndPoint, Verb} -> {EndPoint, Verb};
          {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
-			    {error, _Reason};           
+			    {error, _Reason};   
+         {EndPoint, Verb} -> {EndPoint, Verb};        
 	 _ -> {error, not_found}
     end,
    
@@ -201,8 +201,8 @@ is_user_exists(User, Host) ->
     				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId1, [global, {return, list}]),
     				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["client_secret", ClientSecret]),
     				case {Url, Verb1} of
-         		             {Url, Verb2} ->  post_isUserExists_request(Verb2, json, _Url, [200], []);
-                                     {error, _Reason1} -> {error, _Reason1};
+         		             {error, _Reason1} -> {error, _Reason1};
+                                     {Url, Verb2} ->  post_isUserExists_request(Verb2, json, _Url, [200], []);
          		             _ -> {error, not_found}
     				end;
       {error, _Reason1}  -> {error, _Reason1};
@@ -305,10 +305,10 @@ authenticate_request(Host, User, Password) ->
          _ -> {error, not_found}                           
     end,
     {Url, Verb1}  = case  ResourceEndpoint of 
-	 {EndPoint, Verb} -> {EndPoint, Verb};
          {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
-			    {error, _Reason};           
-	 _ -> {error, _Reason}
+			    {error, _Reason}; 	 
+	 {EndPoint, Verb} -> {EndPoint, Verb};          
+	 _ -> {error, not_found}
     end,
     
     Response =  
@@ -319,8 +319,8 @@ authenticate_request(Host, User, Password) ->
     				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId1, [global, {return, list}]),
     				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["access_token", Password]),
     				case {Url, Verb1} of
-                                     {Url, Verb2} ->  post_authenticate_request(Verb2, json, _Url, [200], [], [""])
          		             {error, _Reason1} -> {error, _Reason1};
+                                     {Url, Verb2} ->  post_authenticate_request(Verb2, json, _Url, [200], [], [""]);
          		             _ ->  {error, not_found}
     				end;
       {error, _Reason1}  -> {error, _Reason1};
