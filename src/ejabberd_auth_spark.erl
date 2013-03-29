@@ -190,7 +190,6 @@ is_user_exists(User, Host) ->
          {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
 			    {error, _Reason};           
 	 {EndPoint, Verb} -> {EndPoint, Verb}
-%%         {"brandId/{brandId}/application/{applicationId}/member/{memberId}/status", [get]} -> {A, [Verb]}
     end,
     ResourceEndpoint1 = re:replace(ResourceEndpoint, "{brandId}", BrandId, [global, {return, list}]),
     ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", AppId, [global, {return, list}]),
@@ -249,20 +248,32 @@ store_type() ->
 %%      anything else is error and considered authentication error and failed.
 %% @end
 -spec check_auth_response(AuthStatus::[tuple()]) -> {ok, authenticated} | {error, term()} | term().
-check_auth_response(AuthStatus) ->
-    case AuthStatus of
-             [{<<"Success">>,true}, 
-              _MemberId, 
-              _AccessToken, 
-              _ExpiresIn, 
-              _AccessExpiresTime, 
-              _RefreshToken, 
-              _RefreshTokenExpiresTime, 
-              {<<"Error">>,null},
-              _IsPayingMember] -> {ok, authenticated};
-             {error, Reason} -> {error, Reason};
-             Error -> {error, Error}
-     end.	
+   check_auth_response(AuthStatus, MemberId) ->
+       case AuthStatus of
+    		[{<<"id">>,MemberId}, _, _, _, _, _, _,
+          	  _, _, _, _, _, _, _, _,
+          	 {<<"subscriptionStatus">>,<<"Member">>},
+          	 _, _, _}]} -> {ok, authenticated};
+		{error, Reason} -> {error, Reason};
+ 		Error -> {error, Error}
+       end.
+
+%% check_auth_response(AuthStatus) ->
+%%    case AuthStatus of
+%%             [{<<"Success">>,true}, 
+%%              _MemberId, 
+%%              _AccessToken, 
+%%              _ExpiresIn, 
+%%              _AccessExpiresTime, 
+%%              _RefreshToken, 
+%%              _RefreshTokenExpiresTime, 
+%%              {<<"Error">>,null},
+%%              _IsPayingMember] -> {ok, authenticated};
+%%             {error, Reason} -> {error, Reason};
+%%             Error -> {error, Error}
+%%     end.
+
+	
 
 check_isUser_response(IsUserStatus)->
     case IsUserStatus of
@@ -297,39 +308,22 @@ authenticate_request(Host, User, Password) ->
          {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
 			    {error, _Reason};           
 	 {EndPoint, Verb} -> {EndPoint, Verb}
-%%         {"brandId/{brandId}/application/{applicationId}/member/{memberId}/status", [get]} -> {A, [Verb]}
+%% https://api.spark.net/brandId/1003/profile/miniProfile/133272351/133272351?access_token=1/JzVptkYMzKTZK6Vn2FaLx0UyqNGSQv+n62Xb48b3hEg=
+
     end,
-    _Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint,["client_secret", ClientSecret]),
+
+%% - {0}/brandId/{brandId}/profile/miniProfile/{targetMemberId}/
+    ResourceEndpoint1 = re:replace(ResourceEndpoint, "{brandId}", BrandId, [global, {return, list}]),
+    ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", MemberId, [global, {return, list}]),
+    ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId, [global, {return, list}]),
+    _Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint3,["access_token", Password]),
+
     Response = case {Url, Verb} of
          {error, _Reason1} -> {error, _Reason};
          {Url, Verb} -> post_authenticate_request(post, json, Url, [200], [], [""])
     end,
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Response]),
-    Response
-
-
-
-
-.
-
-
-%% @private
-%% @doc Construct the full service restful call 
-%% @end
-%%  PostToUrl1 = restc:construct_url("https://api.spark.net","brandId/1003/application/1000/member/133272351/status",[{"client_secret","SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"})).                                                     "https://api.spark.net/brandId/1003/application/1000/member/133272351/status?client_secret=SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"
-
-%%  restc:request(get, json, PostToUrl1, [200],[]). 
-%%   construct_restfull_call(Host, GetEndPoint) when is_function(GetEndPoint,1)>
-%%      {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(Host),
-%%      ResourceEndpoint = apply(GetEndPoint, [Host]),
-%%      Val = case get_loginData(User, Host) of
-%%           {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
-%%           {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
-%%      end,
-%%      {{service_endpoint, ResourceEndpoint}, Val}.
-    %%InsertUrlParameter(ServiceEndpoint, ResourceEndpoint, QueryString).
-    %Url = restc:construct_url(ServiceEndpoint, ResourceEndpoint,["client_secret", ClientSecret], {"Email", Email}, {"Password", Password}),
-
+    Response.
 
 
 %% @private
