@@ -73,9 +73,6 @@ start(Host) ->
     ?DEBUG("Spark authentication with status: ~p~n", [RETVAL]),    
     RETVAL.
 
-
-
-
 %% @doc Set user and password onto server. This is not needed; will be done on mainsite
 %% @end
 -spec set_password(User::string(), Server::string(), Password::string()) -> {error, not_allowed}.
@@ -262,23 +259,6 @@ store_type() ->
  		Error -> {error, Error}
        end.
 
-%% check_auth_response(AuthStatus) ->
-%%    case AuthStatus of
-%%             [{<<"Success">>,true}, 
-%%              _MemberId, 
-%%              _AccessToken, 
-%%              _ExpiresIn, 
-%%              _AccessExpiresTime, 
-%%              _RefreshToken, 
-%%              _RefreshTokenExpiresTime, 
-%%              {<<"Error">>,null},
-%%              _IsPayingMember] -> {ok, authenticated};
-%%             {error, Reason} -> {error, Reason};
-%%             Error -> {error, Error}
-%%     end.
-
-	
-
 check_isUser_response(IsUserStatus)->
     case IsUserStatus of
          [{<<"subscriptionStatus">>, "Member"}] -> {ok, subscriber};
@@ -312,11 +292,7 @@ authenticate_request(Host, User, Password) ->
          {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
 			    {error, _Reason};           
 	 {EndPoint, Verb} -> {EndPoint, Verb}
-%% https://api.spark.net/brandId/1003/profile/miniProfile/133272351/133272351?access_token=1/JzVptkYMzKTZK6Vn2FaLx0UyqNGSQv+n62Xb48b3hEg=
-
     end,
-
-%% - {0}/brandId/{brandId}/profile/miniProfile/{targetMemberId}/
     ResourceEndpoint1 = re:replace(ResourceEndpoint, "{brandId}", BrandId, [global, {return, list}]),
     ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", MemberId, [global, {return, list}]),
     ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId, [global, {return, list}]),
