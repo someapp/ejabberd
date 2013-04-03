@@ -23,6 +23,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("kernel/include/file.hrl").
 -endif.
+-include("ejabberd.hrl").
+-define(CURRENT_FUNCTION_NAME(), element(2, element(2, process_info(self(), current_function)))).
 
 %% @doc Retrieve login Data from Jid
 %%      returns the {brandid, integer}, {memberid, integer} or {error, Reason}
@@ -38,6 +40,7 @@ get_loginData(UserName, Host) when (is_list(UserName)) ->
                      {error, Reason} -> {error, Reason};
                      Else -> {error, Else}
   		end,
+  ?DEBUG("~p CommunityAndMemberId ~p~n", [?CURRENT_FUNCTION_NAME(), CommunityAndMemberId]),
   case get_brandId_from_communityId(CommunityAndMemberId,Host) of
         {ok, {brandid, C}, {memberId, Id}} -> 
 					     {ok, {brandid, C}, {memberId, Id}};
@@ -74,10 +77,12 @@ get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 
         Val2 -> find_value(CommunityId, Ids)
    end,
    BrandId = extract_brandId(Val1),
-   case BrandId of
+   Val3 = case BrandId of
         {ok, {brandid, C}} -> {ok, {brandid, C}, {memberId, MemberId}};
         {error, Reason2} -> {error, {brandid, not_found}, {memberId, not_found}, Reason2}
-   end;
+   end,
+   ?DEBUG("~p Get BranId from CommunityId ~p~n", [?CURRENT_FUNCTION_NAME(), Val3]),
+   Val3;
 get_brandId_from_communityId({error, Reason}, _) -> 
   {error, {brandid, not_found}, {memberid, not_found}, Reason}; 
 get_brandId_from_communityId(_,_) -> 
