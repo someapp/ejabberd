@@ -6,7 +6,6 @@
 %%%---------------------------------------------------------------------
 %%%
 %%% Copyright (c)
-%%%
 %%%----------------------------------------------------------------------
 %%% @end
 
@@ -105,6 +104,7 @@ check_password(User, Host, Password) when is_list(Password) ->
     ?DEBUG("~p with user ~p host ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), User, Host, get_password_string(Password)]),
     LUser = jlib:nodeprep(User),
     LHost = jlib:nameprep(Host),
+    ?INFO_MSG("~p Authenicating user: ~p host ~p~n",[?CURRENT_FUNCTION_NAME(), LUser, LHost]),
     %UserHost = {LUser, LHost},  
     RETVAL =  case authenticate_request(LHost, LUser, Password) of
                    {ok, authenticated} -> true;
@@ -296,7 +296,8 @@ get_global_call_parameters(Host)->
 -spec authenticate_request(Host::string(), Email::string(), Password::string()) -> {ok, authenticated} | {error, term()} | term().
 authenticate_request(Host, User, Password) ->    
     {{serviceEndpoint, BaseServiceEndpoint}, {appId, _AppId}, {client_secret, _ClientSecret}} = get_global_call_parameters(Host),
-    ResourceEndpoint = ejabberd_auth_spark_config:get_authentication_service_endpoint(Host),
+    ResourceEndpoint = ejabberd_auth_spark_config:get_spark_authservice_endpoint(Host),
+    ?DEBUG("~p Config read with resource_endpoint ~p~n", [?CURRENT_FUNCTION_NAME(), ResourceEndpoint]),
     Val = case spark_parse_loginData:get_loginData(User, Host) of
 	 {ok, {brandid, BrandId}, {memberid, MemberId}} -> {ok, {brandid, BrandId}, {memberid, MemberId}};
          {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
@@ -304,20 +305,25 @@ authenticate_request(Host, User, Password) ->
          {error, Reason2} -> {error, Reason2};
          _ -> {error, not_found}                           
     end,
+    ?DEBUG("~p Config read with brandId & memeberId ~p~n", 
+[?CURRENT_FUNCTION_NAME(), Val]),
     {Url, Verb1}  = case  ResourceEndpoint of 
          {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
 			    {error, _Reason}; 	 
 	 {EndPoint, Verb} -> {EndPoint, Verb};          
 	 _ -> {error, not_found}
     end,
-    
+    ?DEBUG("~p Config read Resource Url and Http Verb ~p~n", 
+[?CURRENT_FUNCTION_NAME(), {Url, Verb1}]),
     Response =  
     case Val of
       {ok, {brandid, BrandId1}, {memberid, MemberId1}} ->
                                  ResourceEndpoint1 = re:replace(Url, "{brandId}", BrandId1, [global, {return, list}]),
    				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", MemberId1, [global, {return, list}]),
     				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId1, [global, {return, list}]),
+	                        
     				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["access_token", Password]),
+                                ?DEBUG("~p Initiate rest call ~pn", [?CURRENT_FUNCTION_NAME(), _Url]),
     				case {Url, Verb1} of
          		             {error, _Reason1} -> {error, _Reason1};
                                      {Url, Verb2} ->  post_authenticate_request(Verb2, json, _Url, [200], [], [""]);
@@ -388,8 +394,17 @@ post_isUserExists_request(Method, Type, Url, Expect, Headers) ->
 -spec get_password_string(_Password::string())-> string().
 get_password_string("") -> 
     ""; 
-get_password_string(_Password) when is_list(_Password)->
-    "******".
+
+get_password_string(_Password) when is_list(_Password) ->
+   get_password_string(_Password, true).
+
+get_password_string(_Password, true) when is_list(_Password)->
+    "******";
+get_password_string(_Password, false) when is_list(_Password)->
+    _Password;
+get_password_string(_Password, IsDebug) when is_list(_Password) ->
+    get_password_string(_Password, false).
+
 string_to_integer(StringValue)->
     case string:to_integer(StringValue) of
     	{Int, _} -> Int;

@@ -73,6 +73,11 @@ start(Host) ->
     ?DEBUG("Spark authentication with status: ~p~n", [RETVAL]),    
     RETVAL.
 
+%%@doc load ejabberd_auth_spark config
+-spec load_config(Host::string()) -> ok | {error, atom()}.
+load_config(Host) ->
+    
+
 %% @doc Set user and password onto server. This is not needed; will be done on mainsite
 %% @end
 -spec set_password(User::string(), Server::string(), Password::string()) -> {error, not_allowed}.
@@ -286,7 +291,7 @@ get_global_call_parameters(Host)->
 -spec authenticate_request(Host::string(), Email::string(), Password::string()) -> {ok, authenticated} | {error, term()} | term().
 authenticate_request(Host, User, Password) ->    
     {{serviceEndpoint, BaseServiceEndpoint}, {appId, _AppId}, {client_secret, _ClientSecret}} = get_global_call_parameters(Host),
-    ResourceEndpoint = ejabberd_auth_spark_config:get_authentication_service_endpoint(Host),
+    ResourceEndpoint = ejabberd_auth_spark_config:get_spark_authservice_endpoint(Host),
     Val = case spark_parse_loginData:get_loginData(User, Host) of
          {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
          {ok, {brandid, BrandId}, {memberid, MemberId}} -> {brandid, BrandId}, {memberid, MemberId}                               
