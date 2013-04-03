@@ -1,7 +1,7 @@
 %%%----------------------------------------------------------------------
 %%%
 %%% @author : Edward Tsang <etsang@spark.net>
-%%% @doc Parse and extract ejaaberd Jid data into isUserData 
+%%% @doc Parse and extract ejaaberd Jid data into isUs/erData 
 %%% Created : 20 Mar 2013
 %%% @end
 %%%---------------------------------------------------------------------
@@ -54,7 +54,7 @@ get_loginData(_,_) ->
 %% @end
 %-spec get_spark_communityId_brandId_mapping(Host::string()) -> {tuple()} | {error, not_found}.
 %get_spark_communityId_brandId_mapping(Host) ->
-%    case ejabberd_auth_spark:get_spark_auth_service_config(Host,community2brandId) of
+%    case ejabberd_auth_spark:get_spark_auth_service_config(Host) of
 %       {error, REASON} -> {error, REASON}; 	
 %       HasValue -> HasValue
 %    end. 
@@ -65,7 +65,7 @@ get_loginData(_,_) ->
 %% @end
 %-spec get_brandId_from_communityId([CommunityId::integer(),MemberId::integer()], Host::string())-> {error, tuple(), term()} | {ok, {atom(), integer()},  {atom(), integer()}}.
 get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 0)->
-   Ids = case ejabberd_auth_spark:get_spark_auth_service_config({community2brandId,Host}) of
+   Ids = case ejabberd_auth_spark_config:get_spark_communityId_brandId_mapping(Host) of
              {error, Reason} -> {error, Reason};             
              Val -> Val
          end,
