@@ -206,7 +206,7 @@ is_user_exists(User, Host) ->
     				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,[{"client_secret", ClientSecret}]),
     				case {Url, Verb1} of
          		             {error, _Reason1} -> {error, _Reason1};
-                                     {Url, Verb2} ->  post_isUserExists_request(Verb2, json, _Url, ["200"], []);
+                                     {Url, [Verb2]} ->  post_isUserExists_request(Verb2, json, _Url, ["200"], []);
          		             _ -> {error, not_found}
     				end;
       {error, _Reason1}  -> {error, _Reason1};
@@ -331,7 +331,7 @@ authenticate_request(Host, User, Password) ->
                                 ?DEBUG("~p Initiate rest call ~p~n", [?CURRENT_FUNCTION_NAME(), _Url]),
     				case {Url, Verb1} of
          		             {error, _Reason1} -> {error, _Reason1};
-                                     {Url, Verb2} ->  post_authenticate_request(Verb2, json, _Url, ["200"], []);
+                                     {Url, [Verb2]} ->  post_authenticate_request(Verb2, json, _Url, ["200"], []);
          		             _ ->  {error, not_found}
     				end;
       {error, _Reason1}  -> {error, _Reason1};
