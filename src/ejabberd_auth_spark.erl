@@ -200,9 +200,9 @@ is_user_exists(User, Host) ->
     Response =  
     case Val of
       {ok, {brandId, BrandId1}, {memberId, MemberId1}} ->
-                                 ResourceEndpoint1 = re:replace(Url, "{brandId}", integer_to_list(BrandId1), [global, {return, list}]),
-   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", integer_to_list(AppId), [global, {return, list}]),
-    				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", integer_to_list(MemberId1), [global, {return, list}]),
+                                 ResourceEndpoint1 = re:replace(Url, "{brandId}", convert_integer_tolist(BrandId1), [global, {return, list}]),
+   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", convert_integer_tolist(AppId), [global, {return, list}]),
+    				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", convert_integer_tolist(MemberId1), [global, {return, list}]),
     				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,[{"client_secret", ClientSecret}]),
     				case {Url, Verb1} of
          		             {error, _Reason1} -> {error, _Reason1};
@@ -284,6 +284,10 @@ check_isUser_response(IsUserStatus)->
          Error -> {error, Error}
     end.
 
+convert_integer_tolist(IntegerThing) when is_integer(IntegerThing) ->
+   integer_to_list(IntegerThing);
+convert_integer_tolist(IntegerThing) ->
+   IntegerThing.
 
 %% @private
 %% @doc Get Parameters to make restful call
@@ -323,9 +327,9 @@ authenticate_request(Host, User, Password) ->
     Response =  
     case Val of
       {ok, {brandId, BrandId1}, {memberId, MemberId1}} ->
-                                 ResourceEndpoint1 = re:replace(Url, "{brandId}", integer_to_list(BrandId1), [global, {return, list}]),
-   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", integer_to_list(MemberId1), [global, {return, list}]),
-    				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", integer_to_list(MemberId1), [global, {return, list}]),
+                                 ResourceEndpoint1 = re:replace(Url, "{brandId}", convert_integer_tolist(BrandId1), [global, {return, list}]),
+   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", convert_integer_tolist(MemberId1), [global, {return, list}]),
+    				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", convert_integer_tolist(MemberId1), [global, {return, list}]),
 	                        ?DEBUG("~p construct rest call ~p ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), BaseServiceEndpoint, ResourceEndpoint3, Password]),
     				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,[{"access_token", Password}]),
                                 ?DEBUG("~p Initiate rest call ~p~n", [?CURRENT_FUNCTION_NAME(), _Url]),
@@ -364,7 +368,7 @@ post_authenticate_request(Method, Type, Url, Expect, Headers) ->
 	    {ok, ?AUTHENTICATED, _, ResponseBody} -> check_auth_response(ResponseBody);
             ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
             [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
-		     {error, bad_responsebody}
+		     {error, bad_request}
     end,
     case Status1 of 
          {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody1} -> check_auth_response(ResponseBody1);
@@ -385,7 +389,7 @@ post_isUserExists_request(Method, Type, Url, Expect, Headers) ->
 	{ok, ?AUTHENTICATED, _, ResponseBody} -> check_isUser_response(ResponseBody);
         ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
                          [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
-		         {error, bad_responsebody}
+		         {error, bad_request}
     end.   
 
 %% @private

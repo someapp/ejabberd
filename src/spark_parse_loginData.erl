@@ -70,9 +70,9 @@ get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 
         {error, Reason1} -> {error, Reason1};
         _Val2 -> find_value(CommunityId, Ids)
    end,
-   CId = binary_to_number(CommunityId),
+   MId = binary_to_number(MemberId),
    Val3 = case Val1 of
-        {ok, Val2} -> {ok, {brandId, Val2}, {memberId, CId}};
+        {ok, Val2} -> {ok, {brandId, Val2}, {memberId, MId}};
         {error, _Reason} -> {ok, {brandId, not_found}, {memberId, not_found}};
         Else -> {error, Else}
    end,
