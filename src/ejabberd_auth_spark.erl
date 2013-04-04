@@ -68,9 +68,13 @@
 %% @end
 start(Host) ->
     ?DEBUG("~p with host: ~p~n", [?CURRENT_FUNCTION_NAME(), Host]),
-    RETVAL = ok,
-    ?DEBUG("Spark authentication with status: ~p~n", [RETVAL]),    
-    RETVAL.
+    application:start(inets),
+    application:start(crypto),
+    application:start(public_key),
+    application:start(ssl).
+    %RETVAL = ok,
+    %?DEBUG("Spark authentication with status: ~p~n", [RETVAL]),    
+    %RETVAL.
 
 %% @doc Set user and password onto server. This is not needed; will be done on mainsite
 %% @end
