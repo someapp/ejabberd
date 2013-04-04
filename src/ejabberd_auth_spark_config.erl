@@ -20,7 +20,9 @@
 %% External exports
 
 -export([
-	get_spark_authservice_endpoint/1,
+	get_spark_authservice_endpoint/1, 
+	get_isUserExists_service_endpoint/1,
+        get_miniProfile_service_endpoint/1,
         get_spark_client_secrete/1,
         get_spark_application_id/1, 
 	get_rest_client_timeout_in_sec/1, 
@@ -119,7 +121,7 @@ get_miniProfile_service_endpoint(Host)->
 %% @doc get the isUserExists endpoint rest client to talk to
 %% @end
 get_isUserExists_service_endpoint(Host)->
-    get_spark_auth_service_config(Host, auth_profile_miniProfile).
+    get_spark_auth_service_config(Host, profile_memberstatus).
 
 
 %% @doc get the Url token replace

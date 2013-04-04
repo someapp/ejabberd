@@ -196,9 +196,9 @@ is_user_exists(User, Host) ->
     Response =  
     case Val of
       {ok, {brandId, BrandId1}, {memberId, MemberId1}} ->
-                                 ResourceEndpoint1 = re:replace(Url, "{brandId}", BrandId1, [global, {return, list}]),
-   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", AppId, [global, {return, list}]),
-    				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId1, [global, {return, list}]),
+                                 ResourceEndpoint1 = re:replace(Url, "{brandId}", integer_to_list(BrandId1), [global, {return, list}]),
+   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", integer_to_list(AppId), [global, {return, list}]),
+    				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", integer_to_list(MemberId1), [global, {return, list}]),
     				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["client_secret", ClientSecret]),
     				case {Url, Verb1} of
          		             {error, _Reason1} -> {error, _Reason1};
@@ -295,9 +295,10 @@ get_global_call_parameters(Host)->
 %% @end
 -spec authenticate_request(Host::string(), Email::string(), Password::string()) -> {ok, authenticated} | {error, term()} | term().
 authenticate_request(Host, User, Password) ->    
-    {{serviceEndpoint, BaseServiceEndpoint}, {appId, _AppId}, {client_secret, _ClientSecret}} = get_global_call_parameters(Host),
-    ResourceEndpoint = ejabberd_auth_spark_config:get_spark_authservice_endpoint(Host),
-    ?DEBUG("~p Config read with resource_endpoint ~p~n", [?CURRENT_FUNCTION_NAME(), ResourceEndpoint]),
+    V = get_global_call_parameters(Host),
+    {{serviceEndpoint, BaseServiceEndpoint}, {appId, _AppId}, {client_secret, _ClientSecret}} = V, 
+    ResourceEndpoint = ejabberd_auth_spark_config:get_miniProfile_service_endpoint(Host),
+    ?DEBUG("~p Config read with resource_endpoint ResourceEndpoint ~p V ~p~n", [?CURRENT_FUNCTION_NAME(), ResourceEndpoint, V]),
     Val = case spark_parse_loginData:get_loginData(User, Host) of
 	 {ok, {brandId, BrandId}, {memberId, MemberId}} -> {ok, {brandId, BrandId}, {memberId, MemberId}};
          {error, {brandId, _}, {memberId, _}, Reason} -> {error, Reason};
@@ -318,9 +319,9 @@ authenticate_request(Host, User, Password) ->
     Response =  
     case Val of
       {ok, {brandId, BrandId1}, {memberId, MemberId1}} ->
-                                 ResourceEndpoint1 = re:replace(Url, "{brandId}", BrandId1, [global, {return, list}]),
-   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", MemberId1, [global, {return, list}]),
-    				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId1, [global, {return, list}]),
+                                 ResourceEndpoint1 = re:replace(Url, "{brandId}", integer_to_list(BrandId1), [global, {return, list}]),
+   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", integer_to_list(MemberId1), [global, {return, list}]),
+    				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", integer_to_list(MemberId1), [global, {return, list}]),
 	                        
     				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["access_token", Password]),
                                 ?DEBUG("~p Initiate rest call ~pn", [?CURRENT_FUNCTION_NAME(), _Url]),
