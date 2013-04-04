@@ -199,10 +199,10 @@ is_user_exists(User, Host) ->
                                  ResourceEndpoint1 = re:replace(Url, "{brandId}", integer_to_list(BrandId1), [global, {return, list}]),
    				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", integer_to_list(AppId), [global, {return, list}]),
     				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", integer_to_list(MemberId1), [global, {return, list}]),
-    				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["client_secret", ClientSecret]),
+    				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,[{"client_secret", ClientSecret}]),
     				case {Url, Verb1} of
          		             {error, _Reason1} -> {error, _Reason1};
-                                     {Url, Verb2} ->  post_isUserExists_request(Verb2, json, _Url, [200], []);
+                                     {Url, Verb2} ->  post_isUserExists_request(Verb2, json, _Url, ["200"], []);
          		             _ -> {error, not_found}
     				end;
       {error, _Reason1}  -> {error, _Reason1};
@@ -322,12 +322,12 @@ authenticate_request(Host, User, Password) ->
                                  ResourceEndpoint1 = re:replace(Url, "{brandId}", integer_to_list(BrandId1), [global, {return, list}]),
    				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", integer_to_list(MemberId1), [global, {return, list}]),
     				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", integer_to_list(MemberId1), [global, {return, list}]),
-	                        
-    				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,["access_token", Password]),
-                                ?DEBUG("~p Initiate rest call ~pn", [?CURRENT_FUNCTION_NAME(), _Url]),
+	                        ?DEBUG("~p construct rest call ~p ~p password ~p~n", [?CURRENT_FUNCTION_NAME(), BaseServiceEndpoint, ResourceEndpoint3, Password]),
+    				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,[{"access_token", Password}]),
+                                ?DEBUG("~p Initiate rest call ~p~n", [?CURRENT_FUNCTION_NAME(), _Url]),
     				case {Url, Verb1} of
          		             {error, _Reason1} -> {error, _Reason1};
-                                     {Url, Verb2} ->  post_authenticate_request(Verb2, json, _Url, [200], [], [""]);
+                                     {Url, Verb2} ->  post_authenticate_request(Verb2, json, _Url, ["200"], []);
          		             _ ->  {error, not_found}
     				end;
       {error, _Reason1}  -> {error, _Reason1};
@@ -343,15 +343,16 @@ authenticate_request(Host, User, Password) ->
 %% if the http code returns 200 and the Response body constains no error message and the Success Status is true 
 %% @end
 %% https://api.spark.net/brandId/1003/application/1000/member/133272351/status?client_secret=SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1
--spec post_authenticate_request(Method::atom(), Type::atom(), Url::string(), Expect::[atom()], Headers::[term()], Body::[term()]) -> {ok, authenticated} | {error, term()} | term().
-post_authenticate_request(Method, Type, Url, Expect, Headers, Body) ->
-    
+-spec post_authenticate_request(Method::atom(), Type::atom(), Url::string(), Expect::[atom()], Headers::[term()]) -> {ok, authenticated} | {error, term()} | term().
+post_authenticate_request(Method, Type, Url, Expect, Headers) ->
+    ?DEBUG("~p Method ~p Type ~p Url ~p Expect ~p Headers ~p~n", [?CURRENT_FUNCTION_NAME(), Method, Type, Url, Expect, Headers]),
     RetValue = 
-       case restc:request(Method, Type, Url, [Expect], Headers, Body) of
+       case restc:request(Method, Type, Url, Expect, Headers) of
 	    {ok, Status, H, B} -> {ok, Status, H, B};
             {error, Status, _H, _B} -> {error, Status, _H, _B}; 
             Status -> Status
        end,
+
     ?ERROR_MSG("RestCall failed with status ~p ~p~n", 
 	    [?CURRENT_FUNCTION_NAME(), RetValue]),    
    
