@@ -68,15 +68,19 @@ get_loginData(_,_) ->
 %% @end
 %-spec get_brandId_from_communityId([CommunityId::integer(),MemberId::integer()], Host::string())-> {error, tuple(), term()} | {ok, {atom(), integer()},  {atom(), integer()}}.
 get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 0)->
+   ?DEBUG("~p CommunityId ~p, MemberID ~p~n", [?CURRENT_FUNCTION_NAME(), CommunityId, MemberId]), 
    Ids = case ejabberd_auth_spark_config:get_spark_communityId_brandId_mapping(Host) of
              {error, Reason} -> {error, Reason};             
              Val -> Val
          end,
+   ?DEBUG("~p Config Read BrandI-CommunityId Map ~p~n", [?CURRENT_FUNCTION_NAME(), Ids]),
    Val1 = case Ids of
         {error, Reason1} -> {error, Reason1};
         Val2 -> find_value(CommunityId, Ids)
    end,
+   ?DEBUG("~p Get CommunityId ~p~n", [?CURRENT_FUNCTION_NAME(), Val1]),
    BrandId = extract_brandId(Val1),
+   ?DEBUG("~p Extracted BrandId from CommunityId ~p~n", [?CURRENT_FUNCTION_NAME(), BrandId]),
    Val3 = case BrandId of
         {ok, {brandid, C}} -> {ok, {brandid, C}, {memberId, MemberId}};
         {error, Reason2} -> {error, {brandid, not_found}, {memberId, not_found}, Reason2}
@@ -94,7 +98,9 @@ get_brandId_from_communityId(_,_) ->
 
 
 find_value(Key, List) ->
-    case lists:keyfind(Key, 2, List) of
+    Key1 =binary_to_number(Key),
+    ?DEBUG("~p Key ~p Integer Key ~p List ~p~n", [?CURRENT_FUNCTION_NAME(), Key, Key1, List]),    
+    case lists:keyfind(Key1, 2, List) of
         {Key, Result} -> Result;
         false -> {error, nothing}
     end.
@@ -103,6 +109,16 @@ extract_brandId({error, not_found}) -> {error, not_found};
 extract_brandId({_A,_B,C}) -> {ok, {brandid, C}};
 extract_brandId(_)-> {error, not_found}.
 
+binary_to_number(B) ->
+   list_to_number(binary_to_list(B)).
+
+list_to_number(L) when is_list(L) -> 
+   try list_to_float(L)
+   catch 
+        error:badarg -> list_to_integer(L);
+        {error, badarg} -> list_to_integer(L);
+        _ -> {error, badarg}
+   end.
 
 %%%%%% EUNIT %%%%%%%%%%%%%%%%%%
 -ifdef(TEST).
