@@ -27,9 +27,9 @@
 -define(CURRENT_FUNCTION_NAME(), element(2, element(2, process_info(self(), current_function)))).
 
 %% @doc Retrieve login Data from Jid
-%%      returns the {brandid, integer}, {memberid, integer} or {error, Reason}
+%%      returns the {brandId, integer}, {memberId, integer} or {error, Reason}
 %% @end
--spec get_loginData(UserName::string(), Host::string())-> {error, {brandid, atom()}, {memberid, atom()}, atom()}| {ok, {atom(), integer()},  {atom(), integer()}}.
+-spec get_loginData(UserName::string(), Host::string())-> {error, {brandId, atom()}, {memberId, atom()}, atom()}| {ok, {atom(), integer()},  {atom(), integer()}}.
 get_loginData("",_) ->
   {error, user_missing}
 ;
@@ -41,30 +41,22 @@ get_loginData(UserName, Host) when (is_list(UserName)) ->
                      Else -> {error, Else}
   		end,
   ?DEBUG("~p CommunityAndMemberId ~p~n", [?CURRENT_FUNCTION_NAME(), CommunityAndMemberId]),
-  case get_brandId_from_communityId(CommunityAndMemberId,Host) of
-        {ok, {brandid, C}, {memberId, Id}} -> 
-					     {ok, {brandid, C}, {memberId, Id}};
-        {error, {brandid, not_found}, {memberId, not_found}, _Reason} -> 
-									{error, {brandid, not_found}, {memberId, not_found}, _Reason};
+  Ret = case get_brandId_from_communityId(CommunityAndMemberId,Host) of
+        {ok, {brandId, C}, {memberId, Id}} -> 
+					     {ok, {brandId, C}, {memberId, Id}};
+        {error, {brandId, not_found}, {memberId, not_found}, _Reason} -> 
+									{error, {brandId, not_found}, {memberId, not_found}, _Reason};
         _Else -> 
-		{error, {brandid, not_found}, {memberId, not_found}, _Else}
-  end;
+		{error, {brandId, not_found}, {memberId, not_found}, _Else}
+  end,
+  ?DEBUG("~p Returning CommunityAndMemberId ~p~n", [?CURRENT_FUNCTION_NAME(), Ret]),
+  Ret;
 get_loginData(_,_) ->
    {error, user_missing}. 
 
-%% @private
-%% @doc Get the CommunityId to BrandId maping from config
-%% @end
-%-spec get_spark_communityId_brandId_mapping(Host::string()) -> {tuple()} | {error, not_found}.
-%get_spark_communityId_brandId_mapping(Host) ->
-%    case ejabberd_auth_spark:get_spark_auth_service_config(Host) of
-%       {error, REASON} -> {error, REASON}; 	
-%       HasValue -> HasValue
-%    end. 
-
 %% 
 %% @doc Retrieve login Data from Jid
-%%      returns the {brandid, integer}, {memberid, integer} or {error, Reason}
+%%      returns the {brandId, integer}, {memberId, integer} or {error, Reason}
 %% @end
 %-spec get_brandId_from_communityId([CommunityId::integer(),MemberId::integer()], Host::string())-> {error, tuple(), term()} | {ok, {atom(), integer()},  {atom(), integer()}}.
 get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 0)->
@@ -78,12 +70,18 @@ get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 
         {error, Reason1} -> {error, Reason1};
         _Val2 -> find_value(CommunityId, Ids)
    end,
-   ?DEBUG("~p Got BrandId ~p from CommunityId ~p~n", [?CURRENT_FUNCTION_NAME(), Val1, CommunityId]),
-   Val1;
+   CId = binary_to_number(CommunityId),
+   Val3 = case Val1 of
+        {ok, Val2} -> {ok, {brandId, Val2}, {memberId, CId}};
+        {error, _Reason} -> {ok, {brandId, not_found}, {memberId, not_found}};
+        Else -> {error, Else}
+   end,
+   ?DEBUG("~p Got BrandId ~p~n", [?CURRENT_FUNCTION_NAME(), Val3]),
+   Val3;
 get_brandId_from_communityId({error, Reason}, _) -> 
-  {error, {brandid, not_found}, {memberid, not_found}, Reason}; 
+  {error, {brandId, not_found}, {memberId, not_found}, Reason}; 
 get_brandId_from_communityId(_,_) -> 
-  {error, {brandid, not_found}, {memberid, not_found}, mal_formed}.
+  {error, {brandId, not_found}, {memberId, not_found}, mal_formed}.
 
 %% @private
 %% @doc get community / brand id mapping from configure file
@@ -94,8 +92,8 @@ find_value(Key, List) ->
     Key1 =binary_to_number(Key),
     ?DEBUG("~p Key ~p Integer Key ~p List ~p~n", [?CURRENT_FUNCTION_NAME(), Key, Key1, List]),    
     Ret = case lists:keyfind(Key1, 2, List) of
-        {_Type, _Key, Result} -> Result;
-        {Key, Result} -> Result;
+        {_Type, _Key, Result} -> {ok, Result};
+        {Key, Result} -> {ok, Result};
         false -> {error, nothing};
         {error, Reason} -> {error, Reason}
     end,
@@ -121,7 +119,7 @@ get_login_data_baddatatype_test()->
  	?assertEqual({error, user_missing}, get_loginData(wrongtype)).
 
 get_loginData_test() -> 
-        [?assertEqual([{ok, {brandid,}, {memberid, }}],get_loginData("12345-3")),
+        [?assertEqual([{ok, {brandId,}, {memberId, }}],get_loginData("12345-3")),
          ?assertEqual({error, not_exist}, get_loginData("12345-99")),
          ?assertEqual({error, not_exist}, get_loginData("12345-99")),
          ?assertEqual({error, not_exist}, get_loginData("12345-99")),
@@ -134,7 +132,7 @@ get_brandId_from_communityId_baddatatype_test()->
  	?assertEqual({error, user_missing}, get_brandId_from_communityId(wrongtype)).
 
 get_brandId_from_communityId_test() -> 
-        [?assertEqual([{ok, {brandid,}, {memberid, }}],get_brandId_from_communityId("12345-3")),
+        [?assertEqual([{ok, {brandId,}, {memberd, }}],get_brandId_from_communityId("12345-3")),
          ?assertEqual({error, not_exist}, get_brandId_from_communityId("12345-99")),
          ?assertEqual({error, not_exist}, get_brandId_from_communityId("12345-99")),
          ?assertEqual({error, not_exist}, get_brandId_from_communityId("12345-99")),

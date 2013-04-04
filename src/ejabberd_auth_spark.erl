@@ -181,7 +181,7 @@ is_user_exists(User, Host) ->
     ResourceEndpoint = ejabberd_auth_spark_config:get_isUserExists_service_endpoint(LHost),
 
     Val = case spark_parse_loginData:get_loginData(LUser, LHost) of
-         {ok, {brandid, BrandId}, {memberid, MemberId}} -> {ok, {brandid, BrandId}, {memberid, MemberId}};  
+         {ok, {brandId, BrandId}, {memberId, MemberId}} -> {ok, {brandId, BrandId}, {memberId, MemberId}};  
          {error, _, _, Reason} -> {error, Reason};
          {error, Reason1} -> {error, Reason1};
          _ ->   {error, not_found}                         
@@ -195,7 +195,7 @@ is_user_exists(User, Host) ->
    
     Response =  
     case Val of
-      {ok, {brandid, BrandId1}, {memberid, MemberId1}} ->
+      {ok, {brandId, BrandId1}, {memberId, MemberId1}} ->
                                  ResourceEndpoint1 = re:replace(Url, "{brandId}", BrandId1, [global, {return, list}]),
    				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", AppId, [global, {return, list}]),
     				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId1, [global, {return, list}]),
@@ -299,13 +299,13 @@ authenticate_request(Host, User, Password) ->
     ResourceEndpoint = ejabberd_auth_spark_config:get_spark_authservice_endpoint(Host),
     ?DEBUG("~p Config read with resource_endpoint ~p~n", [?CURRENT_FUNCTION_NAME(), ResourceEndpoint]),
     Val = case spark_parse_loginData:get_loginData(User, Host) of
-	 {ok, {brandid, BrandId}, {memberid, MemberId}} -> {ok, {brandid, BrandId}, {memberid, MemberId}};
-         {error, {brandid, _}, {memberid, _}, Reason} -> {error, Reason};
+	 {ok, {brandId, BrandId}, {memberId, MemberId}} -> {ok, {brandId, BrandId}, {memberId, MemberId}};
+         {error, {brandId, _}, {memberId, _}, Reason} -> {error, Reason};
          {error, _, _, Reason1} -> {error, Reason1};
          {error, Reason2} -> {error, Reason2};
          _ -> {error, not_found}                           
     end,
-    ?DEBUG("~p Config read with brandId & memeberId ~p~n", 
+    ?DEBUG("~p Login Data read with brandId & memeberId ~p~n", 
 [?CURRENT_FUNCTION_NAME(), Val]),
     {Url, Verb1}  = case  ResourceEndpoint of 
          {error, _Reason} -> ?ERROR_MSG("Error in calling is user exists Error ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]), 
@@ -317,7 +317,7 @@ authenticate_request(Host, User, Password) ->
 [?CURRENT_FUNCTION_NAME(), {Url, Verb1}]),
     Response =  
     case Val of
-      {ok, {brandid, BrandId1}, {memberid, MemberId1}} ->
+      {ok, {brandId, BrandId1}, {memberId, MemberId1}} ->
                                  ResourceEndpoint1 = re:replace(Url, "{brandId}", BrandId1, [global, {return, list}]),
    				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{targetMemberId}", MemberId1, [global, {return, list}]),
     				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", MemberId1, [global, {return, list}]),
