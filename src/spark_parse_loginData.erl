@@ -76,17 +76,10 @@ get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 
    ?DEBUG("~p Config Read BrandI-CommunityId Map ~p~n", [?CURRENT_FUNCTION_NAME(), Ids]),
    Val1 = case Ids of
         {error, Reason1} -> {error, Reason1};
-        Val2 -> find_value(CommunityId, Ids)
+        _Val2 -> find_value(CommunityId, Ids)
    end,
-   ?DEBUG("~p Get CommunityId ~p~n", [?CURRENT_FUNCTION_NAME(), Val1]),
-   BrandId = extract_brandId(Val1),
-   ?DEBUG("~p Extracted BrandId from CommunityId ~p~n", [?CURRENT_FUNCTION_NAME(), BrandId]),
-   Val3 = case BrandId of
-        {ok, {brandid, C}} -> {ok, {brandid, C}, {memberId, MemberId}};
-        {error, Reason2} -> {error, {brandid, not_found}, {memberId, not_found}, Reason2}
-   end,
-   ?DEBUG("~p Get BranId from CommunityId ~p~n", [?CURRENT_FUNCTION_NAME(), Val3]),
-   Val3;
+   ?DEBUG("~p Got BrandId ~p from CommunityId ~p~n", [?CURRENT_FUNCTION_NAME(), Val1, CommunityId]),
+   Val1;
 get_brandId_from_communityId({error, Reason}, _) -> 
   {error, {brandid, not_found}, {memberid, not_found}, Reason}; 
 get_brandId_from_communityId(_,_) -> 
@@ -100,14 +93,14 @@ get_brandId_from_communityId(_,_) ->
 find_value(Key, List) ->
     Key1 =binary_to_number(Key),
     ?DEBUG("~p Key ~p Integer Key ~p List ~p~n", [?CURRENT_FUNCTION_NAME(), Key, Key1, List]),    
-    case lists:keyfind(Key1, 2, List) of
+    Ret = case lists:keyfind(Key1, 2, List) of
+        {_Type, _Key, Result} -> Result;
         {Key, Result} -> Result;
-        false -> {error, nothing}
-    end.
-
-extract_brandId({error, not_found}) -> {error, not_found};
-extract_brandId({_A,_B,C}) -> {ok, {brandid, C}};
-extract_brandId(_)-> {error, not_found}.
+        false -> {error, nothing};
+        {error, Reason} -> {error, Reason}
+    end,
+    ?DEBUG("~p Found Result ~p~n", [?CURRENT_FUNCTION_NAME(), Ret]),
+    Ret.
 
 binary_to_number(B) ->
    list_to_number(binary_to_list(B)).
