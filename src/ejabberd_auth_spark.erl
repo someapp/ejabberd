@@ -46,6 +46,10 @@
 -include("web/ejabberd_http.hrl").
 -include("web/ejabberd_web_admin.hrl").
 
+-type method() :: head | get | put | post | trace | options | delete.
+-type url() :: binary().
+-type reason() :: term().
+
 
 %%-record(profile, {identity, server, lang, jid}).
 %%TODO the following is janky becasue we are not finding ejabbberd_logger_h.beam just do this before fixing the build script
@@ -204,7 +208,7 @@ is_user_exists(User, Host) ->
     				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,[{"client_secret", ClientSecret}]),
     				case {Url, Verb1} of
          		             {error, _Reason1} -> {error, _Reason1};
-                                     {Url, [Verb2]} ->  post_isUserExists_request(Verb2, json, _Url, ["200"], []);
+                                     {Url, [Verb2]} ->  post_isUserExists_request(Verb2, json, _Url, [200], []);
          		             _ -> {error, not_found}
     				end;
       {error, _Reason1}  -> {error, _Reason1};
@@ -276,8 +280,18 @@ check_auth_response(AuthStatus) ->
 
 check_isUser_response(IsUserStatus)->
     case IsUserStatus of
-         [{<<"subscriptionStatus">>, "Member"}] -> {ok, subscriber};
-         [{<<"subscriptionStatus">>, _ }] -> {ok, non_subscriber};
+         %[ok, _, Headers, Body{<<"subscriptionStatus">>, "Member"}] -> {ok, subscriber};
+         %[{<<"subscriptionStatus">>, _ }] -> {ok, non_subscriber};
+         {ok, _, _Headers, Body} -> 
+				   V1 = case  proplists:get_value(<<"status">>,Body) of
+  					 <<"OK">> -> {ok, "OK"};
+                                         Else -> {error, Else}
+				   end,
+                                   M = case proplists:get_value(<<"data">>, Body) of
+                                   	[{<<"subscriptionStatus">>,<<"Member">>}] -> 
+							                         {ok,subscriber};
+					Else1 -> {error, non_subscriber} 
+				   end;
          {error, Reason} -> {error, Reason};
          Error -> {error, Error}
     end.
@@ -333,7 +347,7 @@ authenticate_request(Host, User, Password) ->
                                 ?DEBUG("~p Initiate rest call ~p~n", [?CURRENT_FUNCTION_NAME(), _Url]),
     				case {Url, Verb1} of
          		             {error, _Reason1} -> {error, _Reason1};
-                                     {Url, [Verb2]} ->  post_authenticate_request(Verb2, json, _Url, ["200"], []);
+                                     {Url, [Verb2]} ->  post_authenticate_request(Verb2, json, _Url, [200], []);
          		             _ ->  {error, not_found}
     				end;
       {error, _Reason1}  -> {error, _Reason1};
@@ -378,19 +392,21 @@ post_isUserExists_request(Method, Type, Url, Expect, Headers) ->
     ?DEBUG("~p Method ~p Type ~p Url ~p Expect ~p Headers ~p~n", [?CURRENT_FUNCTION_NAME(), Method, Type, Url, Expect, Headers]),
     RetVal = 
        case restc:request(Method, Type, Url, Expect, Headers) of
-	    {ok, Status, H, B} -> {ok, Status, H, B};
+	    {ok, Status, H, B} -> check_isUser_response(B);
+			        
             {error, Status, _H, _B} ->     
                                   ?ERROR_MSG("RestCall failed with status ~p ~p~n", [?CURRENT_FUNCTION_NAME(), Status]), 
                                   {error, Status, _H, _B}; 
             Status -> Status
        end,
-    ?DEBUG("~p Request Response ~p~n", [?CURRENT_FUNCTION_NAME(), RetVal]),
-    case RetVal of
-	{ok, ?AUTHENTICATED, _, ResponseBody} -> check_isUser_response(ResponseBody);
-        ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
-                         [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
-		         {error, bad_request}
-    end.   
+    ?DEBUG("~p Request Response ~p~n", [?CURRENT_FUNCTION_NAME(), RetVal]).
+  %  case RetVal of
+  % 	{ok, ?AUTHENTICATED, _, ResponseBody} -> check_isUser_response(ResponseBody);
+  %      ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
+  %                        [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
+  %		         {error, bad_request}
+  %  end.   
+  
 
 %% @private
 %% @doc get access expiration time
