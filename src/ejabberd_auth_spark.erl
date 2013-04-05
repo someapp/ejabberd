@@ -214,9 +214,16 @@ is_user_exists(User, Host) ->
       {error, _Reason1}  -> {error, _Reason1};
       Else -> {error, Else}
     end,
-
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Response]),
-    Response.     
+    T = case Response of 
+	{ok, subscriber} -> true;
+        {ok, _ } -> false;
+        {error, Reason2} -> {error, Reason2};
+        Else2 -> {error, Else2}
+    end,
+
+    ?DEBUG("~p Return with status ~p~n", [?CURRENT_FUNCTION_NAME(), T]),
+    T.     
 
 %% @doc Remove user.This function is not allowed, this case taken by mainsite.
 %% @end
@@ -251,7 +258,7 @@ plain_password_required() ->
 %% @end
 -spec store_type()-> scram.
 store_type() ->
-    ?DEBUG(" store type ~p~n", [stored_type]),
+    ?DEBUG("~p store type ~p~n", [?CURRENT_FUNCTION_NAME(),stored_type]),
     RETVAL = scram,
     ?DEBUG("~p with status ~p", [?CURRENT_FUNCTION_NAME(), RETVAL]),
     RETVAL.  
@@ -264,9 +271,9 @@ store_type() ->
 %%      anything else is error and considered authentication error and failed.
 %% @end
 -spec check_auth_response(AuthStatus::[tuple()]) -> {ok, authenticated} | {error, term()} | term().
-check_auth_response(AuthStatus) ->
-     case AuthStatus of
-         {ok, _, _Headers, Body} -> 
+check_auth_response(Body) ->
+     case Body of
+         [_, _Headers, _] -> 
 				   V = case  proplists:get_value(<<"subscriptionStatus">>,Body) of
   					 <<"Member">> -> {ok, authenticated};
 					%Response when is_binary(Response) -> {ok, non_subscriber};
@@ -276,32 +283,22 @@ check_auth_response(AuthStatus) ->
          {error, Reason} -> {error, Reason};
          Error -> {error, Error}
     end.
- %      case AuthStatus of
- %   		[_, _, _, _, _, _, _,
- %         	  _, _, _, _, _, _, _, _,
- %         	 {<<"subscriptionStatus">>,<<"Member">>},
- %         	 _, _, _] -> {ok, authenticated};
- %   		[_, _, _, _, _, _, _,
- %         	  _, _, _, _, _, _, _, _,
- %         	 {<<"subscriptionStatus">>,_},
- %         	 _, _, _] -> {ok, non_subscriber};
- %		{error, Reason} -> {error, Reason};
- %		Error -> {error, Error}
- %      end.
 
-check_isUser_response(IsUserStatus)->
-    case IsUserStatus of
-         %[ok, _, Headers, Body{<<"subscriptionStatus">>, "Member"}] -> {ok, subscriber};
-         %[{<<"subscriptionStatus">>, _ }] -> {ok, non_subscriber};
-         {ok, _, _Headers, Body} -> 
+check_isUser_response(Body)->
+    case Body of
+         [_, _, _] -> 
 				   V1 = case  proplists:get_value(<<"status">>,Body) of
   					 <<"OK">> -> {ok, ok};
                                          Else -> {error, Else}
 				   end,
+				   ?DEBUG("~p return status ~p~n", [?CURRENT_FUNCTION_NAME(),V1]),
                                    M = case proplists:get_value(<<"data">>,Body) of
                                    	[{<<"subscriptionStatus">>,<<"Member">>}]-> {ok, subscriber};
+                                   	[{<<"subscriptionStatus">>,<<"InvalidMember">>}]-> {ok, invalid_member};
 					Else1 -> {error, non_subscriber} 
-				   end;
+				   end,
+    				   ?DEBUG("~p check subscription status ~p~n", [?CURRENT_FUNCTION_NAME(),M]), 
+				   M;
          {error, Reason} -> {error, Reason};
          Error -> {error, Error}
     end.
@@ -400,22 +397,22 @@ post_authenticate_request(Method, Type, Url, Expect, Headers) ->
 
 post_isUserExists_request(Method, Type, Url, Expect, Headers) ->
     ?DEBUG("~p Method ~p Type ~p Url ~p Expect ~p Headers ~p~n", [?CURRENT_FUNCTION_NAME(), Method, Type, Url, Expect, Headers]),
+    V = restc:request(Method, Type, Url, Expect, Headers),
+    ?DEBUG("~p Restc Request Response ~p~n", [?CURRENT_FUNCTION_NAME(), V]),
     RetVal = 
-       case restc:request(Method, Type, Url, Expect, Headers) of
-	    {ok, Status, H, B} -> check_isUser_response(B);
+       case V of
+	    {ok, Status, H, B} ->
+			        ?DEBUG("~p Check is_usr Request Response ~p~n", [?CURRENT_FUNCTION_NAME(), B]),
+				check_isUser_response(B);
 			        
             {error, Status, _H, _B} ->     
                                   ?ERROR_MSG("RestCall failed with status ~p ~p~n", [?CURRENT_FUNCTION_NAME(), Status]), 
                                   {error, Status, _H, _B}; 
             Status -> Status
        end,
-    ?DEBUG("~p Request Response ~p~n", [?CURRENT_FUNCTION_NAME(), RetVal]).
-  %  case RetVal of
-  % 	{ok, ?AUTHENTICATED, _, ResponseBody} -> check_isUser_response(ResponseBody);
-  %      ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
-  %                        [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
-  %		         {error, bad_request}
-  %  end.   
+    ?DEBUG("~p Request Response ~p~n", [?CURRENT_FUNCTION_NAME(), RetVal]), 
+    RetVal.
+  
   
 %% @private
 %% @doc get access expiration time
