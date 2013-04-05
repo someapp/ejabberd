@@ -265,18 +265,29 @@ store_type() ->
 %% @end
 -spec check_auth_response(AuthStatus::[tuple()]) -> {ok, authenticated} | {error, term()} | term().
 check_auth_response(AuthStatus) ->
-       case AuthStatus of
-    		[_, _, _, _, _, _, _,
-          	  _, _, _, _, _, _, _, _,
-          	 {<<"subscriptionStatus">>,<<"Member">>},
-          	 _, _, _] -> {ok, authenticated};
-    		[_, _, _, _, _, _, _,
-          	  _, _, _, _, _, _, _, _,
-          	 {<<"subscriptionStatus">>,_},
-          	 _, _, _] -> {ok, non_subscriber};
-		{error, Reason} -> {error, Reason};
- 		Error -> {error, Error}
-       end.
+     case AuthStatus of
+         {ok, _, _Headers, Body} -> 
+				   V = case  proplists:get_value(<<"subscriptionStatus">>,Body) of
+  					 <<"Member">> -> {ok, authenticated};
+					%Response when is_binary(Response) -> {ok, non_subscriber};
+					{error, Reason} -> {error, Reason};
+                                         Else -> {error, Else}
+				   end;
+         {error, Reason} -> {error, Reason};
+         Error -> {error, Error}
+    end.
+ %      case AuthStatus of
+ %   		[_, _, _, _, _, _, _,
+ %         	  _, _, _, _, _, _, _, _,
+ %         	 {<<"subscriptionStatus">>,<<"Member">>},
+ %         	 _, _, _] -> {ok, authenticated};
+ %   		[_, _, _, _, _, _, _,
+ %         	  _, _, _, _, _, _, _, _,
+ %         	 {<<"subscriptionStatus">>,_},
+ %         	 _, _, _] -> {ok, non_subscriber};
+ %		{error, Reason} -> {error, Reason};
+ %		Error -> {error, Error}
+ %      end.
 
 check_isUser_response(IsUserStatus)->
     case IsUserStatus of
@@ -284,12 +295,11 @@ check_isUser_response(IsUserStatus)->
          %[{<<"subscriptionStatus">>, _ }] -> {ok, non_subscriber};
          {ok, _, _Headers, Body} -> 
 				   V1 = case  proplists:get_value(<<"status">>,Body) of
-  					 <<"OK">> -> {ok, "OK"};
+  					 <<"OK">> -> {ok, ok};
                                          Else -> {error, Else}
 				   end,
-                                   M = case proplists:get_value(<<"data">>, Body) of
-                                   	[{<<"subscriptionStatus">>,<<"Member">>}] -> 
-							                         {ok,subscriber};
+                                   M = case proplists:get_value(<<"data">>,Body) of
+                                   	[{<<"subscriptionStatus">>,<<"Member">>}]-> {ok, subscriber};
 					Else1 -> {error, non_subscriber} 
 				   end;
          {error, Reason} -> {error, Reason};
@@ -407,7 +417,6 @@ post_isUserExists_request(Method, Type, Url, Expect, Headers) ->
   %		         {error, bad_request}
   %  end.   
   
-
 %% @private
 %% @doc get access expiration time
 %% @end
