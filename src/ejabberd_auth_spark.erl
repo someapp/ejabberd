@@ -72,9 +72,6 @@ start(Host) ->
     application:start(crypto),
     application:start(public_key),
     application:start(ssl).
-    %RETVAL = ok,
-    %?DEBUG("Spark authentication with status: ~p~n", [RETVAL]),    
-    %RETVAL.
 
 %% @doc Set user and password onto server. This is not needed; will be done on mainsite
 %% @end
@@ -181,9 +178,10 @@ is_user_exists(User, Host) ->
     LUser = jlib:nodeprep(User),
     LHost = jlib:nameprep(Host),
     %UserHost = {LUser, LHost},
-    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = get_global_call_parameters(LHost),
+    V = get_global_call_parameters(Host),
+    {{serviceEndpoint, BaseServiceEndpoint}, {appId, AppId}, {client_secret, ClientSecret}} = V, 
     ResourceEndpoint = ejabberd_auth_spark_config:get_isUserExists_service_endpoint(LHost),
-
+    ?DEBUG("~p Config read with resource_endpoint ResourceEndpoint ~p V ~p~n", [?CURRENT_FUNCTION_NAME(), ResourceEndpoint, V]),
     Val = case spark_parse_loginData:get_loginData(LUser, LHost) of
          {ok, {brandId, BrandId}, {memberId, MemberId}} -> {ok, {brandId, BrandId}, {memberId, MemberId}};  
          {error, _, _, Reason} -> {error, Reason};
@@ -201,7 +199,7 @@ is_user_exists(User, Host) ->
     case Val of
       {ok, {brandId, BrandId1}, {memberId, MemberId1}} ->
                                  ResourceEndpoint1 = re:replace(Url, "{brandId}", convert_integer_tolist(BrandId1), [global, {return, list}]),
-   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applictionId}", convert_integer_tolist(AppId), [global, {return, list}]),
+   				 ResourceEndpoint2 = re:replace(ResourceEndpoint1, "{applicationId}", convert_integer_tolist(AppId), [global, {return, list}]),
     				 ResourceEndpoint3 = re:replace(ResourceEndpoint2, "{memberId}", convert_integer_tolist(MemberId1), [global, {return, list}]),
     				_Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint3,[{"client_secret", ClientSecret}]),
     				case {Url, Verb1} of
@@ -377,6 +375,7 @@ post_authenticate_request(Method, Type, Url, Expect, Headers) ->
     end.
 
 post_isUserExists_request(Method, Type, Url, Expect, Headers) ->
+    ?DEBUG("~p Method ~p Type ~p Url ~p Expect ~p Headers ~p~n", [?CURRENT_FUNCTION_NAME(), Method, Type, Url, Expect, Headers]),
     RetVal = 
        case restc:request(Method, Type, Url, Expect, Headers) of
 	    {ok, Status, H, B} -> {ok, Status, H, B};

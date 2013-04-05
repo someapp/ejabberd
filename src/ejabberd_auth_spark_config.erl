@@ -61,7 +61,7 @@ get_spark_application_id(Host) ->
 get_spark_client_secrete(Host) ->
     case get_spark_auth_service_config(Host,spark_client_secrete) of
        {error, REASON} -> {error, REASON}; 	
-       HasValue -> string_to_integer(HasValue)
+       HasValue when is_list(HasValue) -> HasValue
     end. 
 
 %% @doc get the rest client time out value in seconds from config file 
