@@ -218,8 +218,10 @@ is_user_exists(User, Host) ->
     T = case Response of 
 	{ok, subscriber} -> true;
         {ok, _ } -> false;
-        {error, Reason2} -> {error, Reason2};
-        Else2 -> {error, Else2}
+        {error, Reason2} -> ?ERROR_MSG("? Error in checking user password Error ~p~n", [?CURRENT_FUNCTION_NAME(), Reason2]),
+		false;
+        Else2 -> ?ERROR_MSG("? Error in checking user password Error ~p~n", [?CURRENT_FUNCTION_NAME(), Else2]), 
+		false
     end,
 
     ?DEBUG("~p Return with status ~p~n", [?CURRENT_FUNCTION_NAME(), T]),
@@ -380,12 +382,13 @@ post_authenticate_request(Method, Type, Url, Expect, Headers) ->
             Status -> Status
        end,
 
-    ?ERROR_MSG("RestCall failed with status ~p ~p~n", 
+    ?ERROR_MSG("?p RestCall failed with status ~p~n", 
 	    [?CURRENT_FUNCTION_NAME(), RetValue]),    
    
     Status1 = case RetValue of
 	    {ok, ?AUTHENTICATED, _, ResponseBody} -> check_auth_response(ResponseBody);
-            ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
+            {error, Status,_, _} -> {error, Status};
+            ResponseBody -> ?INFO_MSG("?p RestCall response malformed with status ~p~n",
             [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
 		     {error, bad_request}
     end,
