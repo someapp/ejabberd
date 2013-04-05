@@ -384,6 +384,7 @@ post_isUserExists_request(Method, Type, Url, Expect, Headers) ->
                                   {error, Status, _H, _B}; 
             Status -> Status
        end,
+    ?DEBUG("~p Request Response ~p~n", [?CURRENT_FUNCTION_NAME(), RetVal]),
     case RetVal of
 	{ok, ?AUTHENTICATED, _, ResponseBody} -> check_isUser_response(ResponseBody);
         ResponseBody -> ?INFO_MSG("RestCall response malformed with status ~p ~p~n",
