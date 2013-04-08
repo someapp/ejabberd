@@ -113,6 +113,8 @@ check_password(User, Host, Password) when is_list(Password) ->
     %UserHost = {LUser, LHost},  
     RETVAL =  case authenticate_request(LHost, LUser, Password) of
                    {ok, authenticated} -> true;
+                   {ok, Reason} ->  
+                              ?INFO_MSG("Authenication failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), Reason]),false;
                    {error, REASON} -> 
                                     ?INFO_MSG("Authenication failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, REASON}]),
                                     false;
