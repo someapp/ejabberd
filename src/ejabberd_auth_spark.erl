@@ -274,36 +274,32 @@ store_type() ->
 %% @end
 -spec check_auth_response(AuthStatus::[tuple()]) -> {ok, authenticated} | {error, term()} | term().
 check_auth_response(Body) ->
-     case Body of
-         [_, _Headers, _] -> 
-				   V = case  proplists:get_value(<<"subscriptionStatus">>,Body) of
-  					 <<"Member">> -> {ok, authenticated};
-					%Response when is_binary(Response) -> {ok, non_subscriber};
-					{error, Reason} -> {error, Reason};
-                                         Else -> {error, Else}
-				   end;
-         {error, Reason} -> {error, Reason};
-         Error -> {error, Error}
-    end.
+    V1 = case proplists:get_value(<<"data">>,Body) of 
+		undefined -> {error, missing_body};
+	        List -> List
+	end,
+    V = case  proplists:get_value(<<"subscriptionStatus">>,V1) of
+    	     <<"Member">>-> {ok, subscriber};
+	     {error, Reason} -> {error, Reason};
+             Else -> {ok, non_subscriber}
+       end, 
+    V.
 
 check_isUser_response(Body)->
-    case Body of
-         [_, _, _] -> 
-				   V1 = case  proplists:get_value(<<"status">>,Body) of
-  					 <<"OK">> -> {ok, ok};
-                                         Else -> {error, Else}
-				   end,
-				   ?DEBUG("~p return status ~p~n", [?CURRENT_FUNCTION_NAME(),V1]),
-                                   M = case proplists:get_value(<<"data">>,Body) of
-                                   	[{<<"subscriptionStatus">>,<<"Member">>}]-> {ok, subscriber};
-                                   	[{<<"subscriptionStatus">>,<<"InvalidMember">>}]-> {ok, invalid_member};
-					Else1 -> {error, non_subscriber} 
-				   end,
-    				   ?DEBUG("~p check subscription status ~p~n", [?CURRENT_FUNCTION_NAME(),M]), 
-				   M;
-         {error, Reason} -> {error, Reason};
-         Error -> {error, Error}
-    end.
+    ?DEBUG("~p Check isUser Response Body ~p~n", [?CURRENT_FUNCTION_NAME(),Body]),
+
+    V1 = case proplists:get_value(<<"data">>,Body) of 
+		undefined -> {error, missing_body};
+		List -> List
+	end,
+    M = case proplists:get_value(<<"subscriptionStatus">>, V1) of
+	  <<"Member">>-> {ok, subscriber};
+	  {error, Reason} -> {error, Reason};
+	  Else -> {ok, non_subscriber}
+       end,
+    ?DEBUG("~p Check subscription status ~p~n", [?CURRENT_FUNCTION_NAME(),M]), 
+    M.
+
 
 convert_integer_tolist(IntegerThing) when is_integer(IntegerThing) ->
    integer_to_list(IntegerThing);
@@ -382,7 +378,7 @@ post_authenticate_request(Method, Type, Url, Expect, Headers) ->
             Status -> Status
        end,
 
-    ?ERROR_MSG("?p RestCall failed with status ~p~n", 
+    ?DEBUG("?p RestCall returned with response ~p~n", 
 	    [?CURRENT_FUNCTION_NAME(), RetValue]),    
    
     Status1 = case RetValue of
