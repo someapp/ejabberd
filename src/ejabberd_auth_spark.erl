@@ -355,8 +355,7 @@ authenticate_request(Host, User, Password) ->
 	 {EndPoint, Verb} -> {EndPoint, Verb};          
 	 _ -> {error, not_found}
     end,
-    ?DEBUG("~p Config read Resource Url and Http Verb ~p~n", 
-[?CURRENT_FUNCTION_NAME(), {Url, Verb1}]),
+    ?DEBUG("~p Config read Resource Url and Http Verb ~p~n", [?CURRENT_FUNCTION_NAME(), {Url, Verb1}]),
     Response =  
     case Val of
       {ok, {brandId, BrandId1}, {memberId, MemberId1}} ->
@@ -368,7 +367,9 @@ authenticate_request(Host, User, Password) ->
                                 ?DEBUG("~p Initiate rest call ~p~n", [?CURRENT_FUNCTION_NAME(), _Url]),
     				case {Url, Verb1} of
          		             {error, _Reason1} -> {error, _Reason1};
-                                     {Url, [Verb2]} ->  post_authenticate_request(Verb2, json, _Url, [200], []);
+             
+
+                        {Url, [Verb2]} ->  post_authenticate_request(Verb2, json, _Url, [200], []);
          		             _ ->  {error, not_found}
     				end;
       {error, _Reason1}  -> {error, _Reason1};
@@ -395,10 +396,14 @@ post_authenticate_request(Method, Type, Url, Expect, Headers) ->
     ?DEBUG("~p Method ~p Type ~p Url ~p Expect ~p Headers ~p~n", [?CURRENT_FUNCTION_NAME(), Method, Type, Url, Expect, Headers]),
     RetValue = 
        case restc:request(Method, Type, Url, Expect, Headers) of
-	    {ok, Status, H, B} -> {ok, Status, H, B};
+	    {ok, Status, H, B} ->
+                                ?DEBUG("Authenticate Rest Request successful ~n",[?CURRENT_FUNCTION_NAME()]), 
+                                {ok, Status, H, B};
             {error, Status, _H, _B} -> {error, Status, _H, _B}; 
             Status -> Status
        end,
+
+
 
     ?DEBUG("?p RestCall returned with response ~p~n", 
 	    [?CURRENT_FUNCTION_NAME(), RetValue]),    
@@ -410,8 +415,10 @@ post_authenticate_request(Method, Type, Url, Expect, Headers) ->
             [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
 		     {error, bad_request}
     end,
-    ?DEBUG("?p Check Auth Response returned with ~p",[?CURRENT_FUNCTION_NAME(), Status1]),    
- 
+    
+    ?DEBUG("?p Check Auth Response with returned ~p~n", 
+	    [?CURRENT_FUNCTION_NAME(), Status1]),
+
     case Status1 of
          {ok, subscriber} -> true;
          true -> true;
