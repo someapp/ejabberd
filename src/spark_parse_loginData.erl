@@ -36,7 +36,7 @@ get_loginData("",_) ->
 get_loginData(UserName, Host) when (is_list(UserName)) ->
   CommunityAndMemberId = 
 		case re:split(UserName,"-") of 
- 		     [CommunityId, MemberId] -> [CommunityId, MemberId];
+ 		     [MemberId, CommunityId] -> [MemberId, CommunityId];
                      {error, Reason} -> {error, Reason};
                      Else -> {error, Else}
   		end,
@@ -58,8 +58,8 @@ get_loginData(_,_) ->
 %% @doc Retrieve login Data from Jid
 %%      returns the {brandId, integer}, {memberId, integer} or {error, Reason}
 %% @end
-%-spec get_brandId_from_communityId([CommunityId::integer(),MemberId::integer()], Host::string())-> {error, tuple(), term()} | {ok, {atom(), integer()},  {atom(), integer()}}.
-get_brandId_from_communityId([CommunityId, MemberId], Host) when (CommunityId > 0)->
+%-spec get_brandId_from_communityId([MemberId::integer(),CommunityId::integer()], Host::string())-> {error, tuple(), term()} | {ok, {atom(), integer()},  {atom(), integer()}}.
+get_brandId_from_communityId([MemberId, CommunityId], Host) when (CommunityId > 0)->
    ?DEBUG("~p CommunityId ~p, MemberID ~p~n", [?CURRENT_FUNCTION_NAME(), CommunityId, MemberId]), 
    Ids = case ejabberd_auth_spark_config:get_spark_communityId_brandId_mapping(Host) of
              {error, Reason} -> {error, Reason};             

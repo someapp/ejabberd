@@ -1,3 +1,4 @@
+
 %%%----------------------------------------------------------------------
 %%%
 %%% @author : Edward Tsang <etsang@spark.net>
@@ -112,6 +113,9 @@ check_password(User, Host, Password) when is_list(Password) ->
     ?INFO_MSG("~p Authenicating user: ~p host ~p~n",[?CURRENT_FUNCTION_NAME(), LUser, LHost]),
     %UserHost = {LUser, LHost},  
     RETVAL =  case authenticate_request(LHost, LUser, Password) of
+		   true -> true;
+                   false -> false;
+                   {ok, subscriber} -> true;
                    {ok, authenticated} -> true;
                    {ok, Reason} ->  
                               ?INFO_MSG("Authenication failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), Reason]),false;
@@ -219,6 +223,7 @@ is_user_exists(User, Host) ->
     ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Response]),
     T = case Response of 
 	{ok, subscriber} -> true;
+        true -> true;
         {ok, _ } -> false;
         {error, Reason2} -> ?ERROR_MSG("? Error in checking user password Error ~p~n", [?CURRENT_FUNCTION_NAME(), Reason2]),
 		false;
@@ -276,15 +281,21 @@ store_type() ->
 %% @end
 -spec check_auth_response(AuthStatus::[tuple()]) -> {ok, authenticated} | {error, term()} | term().
 check_auth_response(Body) ->
+   ?DEBUG("~p Check auth
+ Response Body ~p~n", [?CURRENT_FUNCTION_NAME(),Body]),
     V1 = case proplists:get_value(<<"data">>,Body) of 
 		undefined -> {error, missing_body};
 	        List -> List
 	end,
-    V = case  proplists:get_value(<<"subscriptionStatus">>,V1) of
-    	     <<"Member">>-> {ok, subscriber};
+    V = case  proplists:get_value(<<"isPayingMember">>,V1) of
+    	     true-> 
+			?DEBUG("~p Got isPayingMember status ~p~n", [?CURRENT_FUNCTION_NAME(),<<"true/">>]),
+			{ok, subscriber};
+             <<"true">> -> {ok, subscriber};
 	     {error, Reason} -> {error, Reason};
              Else -> {ok, non_subscriber}
        end, 
+    ?DEBUG("~p Check Auth Response Returning ~p~n", [?CURRENT_FUNCTION_NAME(), V]),
     V.
 
 check_isUser_response(Body)->
@@ -294,8 +305,11 @@ check_isUser_response(Body)->
 		undefined -> {error, missing_body};
 		List -> List
 	end,
-    M = case proplists:get_value(<<"subscriptionStatus">>, V1) of
-	  <<"Member">>-> {ok, subscriber};
+    M = case proplists:get_value(<<"subscriptionStatus">>, 
+V1) of
+	  <<"Member">>->
+                  ?DEBUG("~p Got isPayingMember status ~p~n", [?CURRENT_FUNCTION_NAME(),<<"true/">>]),
+		  {ok, subscriber};
 	  {error, Reason} -> {error, Reason};
 	  Else -> {ok, non_subscriber}
        end,
@@ -360,9 +374,15 @@ authenticate_request(Host, User, Password) ->
       {error, _Reason1}  -> {error, _Reason1};
       Else -> {error, Else}
     end,
-
-    ?DEBUG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Response]),
-    Response.
+    ?DEBUG("~p Post Auth Request returns with status ~p~n", [?CURRENT_FUNCTION_NAME(), Response]),
+    R =case Response of
+         true -> true;
+         {ok, subscriber} -> true;
+         subscriber -> true;
+         _OtherStatus -> false
+    end,
+    ?DEBUG("~p Auth_Request returns with status ~p~n", [?CURRENT_FUNCTION_NAME(), R]),   
+    R. 
 
 
 %% @private
@@ -390,11 +410,22 @@ post_authenticate_request(Method, Type, Url, Expect, Headers) ->
             [?CURRENT_FUNCTION_NAME(), ResponseBody]), 
 		     {error, bad_request}
     end,
-    case Status1 of 
-         {ok, ?AUTHENTICATED, _ServerInfo, ResponseBody1} -> check_auth_response(ResponseBody1);
-         {error, Reason} -> {error, Reason};
-         Else -> Else
+    ?DEBUG("?p Check Auth Response returned with ~p",[?CURRENT_FUNCTION_NAME(), Status1]),    
+ 
+    case Status1 of
+         {ok, subscriber} -> true;
+         true -> true;
+         {error, Reason1} -> {error, Reason1};
+         Else -> {error, Else}
     end.
+     
+    
+%    case Status1 of 
+%         {ok, ?AUTHENTICATED, _ServerInfo, Respons
+%eBody1} -> check_auth_response(ResponseBody1);
+%         {error, Reason} -> {error, Reason};
+%         Else -> {error, Else}
+%    end.
 
 post_isUserExists_request(Method, Type, Url, Expect, Headers) ->
     ?DEBUG("~p Method ~p Type ~p Url ~p Expect ~p Headers ~p~n", [?CURRENT_FUNCTION_NAME(), Method, Type, Url, Expect, Headers]),
