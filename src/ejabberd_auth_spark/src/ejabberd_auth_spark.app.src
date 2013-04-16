@@ -1,19 +1,31 @@
 {application, ejabberd_auth_spark,
  [
-  {description, ""},
-  {vsn, git},
-  {modules, []},
-  {registered, []},
+  {description, "Custom ejabberd authentication Module using Spark api v3 restcall"},
+  {vsn, "1.0.0"},
+  {registered, [ejabberd_auth_spark]},
   {applications, [
                   kernel,
                   stdlib,
 		  inets,
 		  crypto,
 		  public_key,
-                  ssl
+		  ssl
                  ]},
-  {mod, {ejabberd_auth_spark_app, []}},
+  {mod, { ejabberd_auth_spark_app, []}},
   {env, [
-        ]}
+	  {spark_auth_endpoint, "https://api.spark.net/v2"},
+   	  {spark_application_id, "1000"},
+	  {rest_client_timeout_in_sec, 15},
+	  {rest_call_retry_attempt, 0},
+	  {community2brandId, [{spark, 1, 1001}, 
+                     {jdate, 3, 1003}, 
+                     {cupid, 10, 1015}, 
+                     {bbw, 23, 90410}, 
+                     {blacksingle, 24, 90510}
+                    ]},
+	 {auth_profile_miniProfile, 
+		{"/brandId/{brandId}/profile/miniProfile/{targetMemberId}", [get]}},
+	 {profile_memberstatus, 
+		{"/brandId/{brandId}/application/{applicationId}/member/{memberId}/status", [get]}}	]},
+	 {service_endpoint_config, "sparkapi.config"
  ]}.
-
