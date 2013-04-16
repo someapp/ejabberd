@@ -1,0 +1,17 @@
+{application, mod_spark_msgarhive,
+ [
+  {description, "Spark IM message archive. Spark Rest api v3 or above is the final destination for messages  "},
+  {vsn, "1.0.0"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { mod_spark_msgarhive_app, []}},
+  {env, [
+	  {spark_auth_endpoint, "https://api.spark.net/v2"},
+	  {auth_profile_miniProfile,
+		{"/brandId/{brandId}/instantmessenger/missedIM?access_token=", [post]}},
+	  {service_endpoint_config, "sparkapi.config"}
+	]}
+ ]}.
