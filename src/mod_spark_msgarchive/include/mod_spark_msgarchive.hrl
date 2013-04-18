@@ -5,8 +5,6 @@
 -type reason() :: term().
 -type result() :: tuple().
 -type reply()::{ok, result()} | {error, reason()}.
-
-
 -record (mod_spark_msgarchive_config, {conf:: [atom(), term()]} ).
 
 %% TODO move the following elsewhere not related to ejabberd function
