@@ -1,0 +1,2 @@
+-define(VERSION, "01").
+-define(AGENT_TRACKER_STRING,<<mod_spark_msgarchive/0.1>>).
