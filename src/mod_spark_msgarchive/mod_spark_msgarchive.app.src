@@ -1,6 +1,6 @@
 {application, mod_spark_msgarhive,
  [
-  {description, "Spark IM message archive. Spark Rest api v3 or above is the final destination for messages  "},
+  {description, "Spark IM message archive. Spark Rest api v3 or above is the final destination for messages"},
   {vsn, "1.0.0"},
   {registered, []},
   {applications, [
