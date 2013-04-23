@@ -3,7 +3,6 @@
 %% mod_spark_msgarchive: Core Riak Application
 %% An erlang module to save and publish the delayed/undelivered im messages to rabbimq
 %%
-%%
 %% @end
 %% -------------------------------------------------------------------
 
@@ -100,7 +99,7 @@ rabbitmq_client_retry_attempt() ->
 %% @private
 get_mod_spark_msgarchive_env(Key) ->
    case app_helper:get_env(?APP_ENV, Key) of
-	undefined -> ?ERROR_MSG("Required envarible missing ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {Key, undefined}]),
+	undefined -> ?ERROR_MSG("Required environment variable missing module version ~p ~p ~p~n",[?VERSION, ?CURRENT_FUNCTION_NAME(), {Key, undefined}]),
 		      undefined;
 	Value -> Value
    end;
@@ -132,54 +131,6 @@ mod_spark_msgarchive_config_test_() ->
        fun get_mod_spark_msgarchive_env_undefinedVal_test_case/0
       ]
     }.
-
-http_ip_and_port_test_case() ->
-    ?assertEqual(error, http_ip_and_port()),
-    %% Test the pre-0.14 style config
-    application:set_env(mod_spark_msgarchive, web_ip, "127.0.0.1"),
-    application:set_env(mod_spark_msgarchive, web_port, 8098),
-    ?assertEqual({"127.0.0.1", 8098}, http_ip_and_port()),
-    %% Test the config for 0.14 and later
-    application:set_env(mod_spark_msgarchive, http, [{"localhost", 9000}]),
-    ?assertEqual({"localhost", 9000}, http_ip_and_port()),
-
-    [application:unset_env(mod_spark_msgarchive, K) || K <- [web_ip, web_port, http]],
-    ok.
-
-default_bucket_props_test_case() ->
-    DefaultBucketProps = [{allow_mult,false},
-                          {chash_keyfun,{mod_spark_msgarchive_util,chash_std_keyfun}},
-                          {last_write_wins,false},
-                          {n_val,3},
-                          {postcommit,[]},
-                          {precommit,[]}],
-    application:set_env(mod_spark_msgarchive, default_bucket_props, DefaultBucketProps),
-    ?assertEqual(DefaultBucketProps, default_bucket_props()).
-
-target_n_val_test_case() ->
-    ?assertEqual(4, target_n_val()).
-
-gossip_interval_test_case() ->
-    %% Explicitly set the value because other
-    %% unit tests change the default.
-    application:set_env(mod_spark_msgarchive, gossip_interval, 60000),
-    ?assertEqual(60000, gossip_interval()).
-
-cluster_name_test_case() ->
-    ?assertEqual("default", cluster_name()).
-
-ring_creation_size_test_case() ->
-    %% Explicitly set the value because other
-    %% unit tests change the default.
-    application:set_env(mod_spark_msgarchive, ring_creation_size, 64),
-    ?assertEqual(64, ring_creation_size()).
-
-ring_state_dir_test_case() ->
-    ?assertEqual("data/ring", ring_state_dir()).
-
-
-%% ===================================================================
-
 
 spark_api_endpoint_test_case()->
     application:set_env(mod_spark_msgarchive, spark_api_endpoint, "http://www.test.endpoint"),
