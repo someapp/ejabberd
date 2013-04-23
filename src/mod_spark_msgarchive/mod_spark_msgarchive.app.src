@@ -5,13 +5,24 @@
   {registered, []},
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+		  inets,
+		  crypto,
+		  public_key,
+		  ssl
                  ]},
   {mod, { mod_spark_msgarhive_app, []}},
   {env, [
-	  {spark_auth_endpoint, "https://api.spark.net/v2"},
+ 	  {rabbitmq_endpoint,"rabbitmq_endpoint"},
+	  {rabbitmq_client_timeout_in_sec, 5},
+  	  {rabbitmq_call_retry_attempt, 3},
+	  {spark_api_endpoint, "https://api.spark.net/v2"},
+	  {rest_client_timeout_in_sec, 5},
+  	  {rest_call_retry_attempt, 0},
+	  {spark_oauth_access_token,"SXO0NoMjOqPDvPNGmEwZsHxnT5oyXTmYKpBXCx3SJTE1"},
 	  {auth_profile_miniProfile,
 		{"/brandId/{brandId}/instantmessenger/missedIM?access_token=", [post]}},
-	  {service_endpoint_config, "sparkapi.config"}
+	  {send_missed_im, 
+             {"/brandId/{brandId}/instantmessenger/missedIM", [post]}
 	]}
  ]}.
