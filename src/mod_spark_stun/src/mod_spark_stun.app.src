@@ -1,3 +1,4 @@
+
 {application, mod_spark_stun,
  [
   {description, "Spark ejabberd to stun relay application, depends on Spark Rest api v3 or above"},
@@ -11,9 +12,9 @@
 		  public_key,
 		  ssl
                  ]},
-  {mod, { mod_spark_stun_app, []}},
+  {mod, { mod_spark_stun, []}},
   {env, [ {stun_server_list, []},
-	  {stun_retry_attempt_in_sec, 5}
+	  {stun_retry_attempt_in_sec, 5},
  	  {rabbitmq_endpoint,"rabbitmq_endpoint"},
 	  {rabbitmq_client_timeout_in_sec, 5},
   	  {rabbitmq_call_retry_attempt, 3},
@@ -24,6 +25,6 @@
 	  {auth_profile_miniProfile,
 		{"/brandId/{brandId}/instantmessenger/missedIM?access_token=", [post]}},
 	  {send_missed_im, 
-             {"/brandId/{brandId}/instantmessenger/missedIM", [post]
+             {"/brandId/{brandId}/instantmessenger/missedIM", [post]}}
 	]}
  ]}.
