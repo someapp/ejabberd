@@ -63,7 +63,7 @@ check_200_status(Body) ->
 
 check_Ok_status(Body) -> 
     case proplists:get_value(<<"status">>) of
-    	   <<"OK">> -> {ok, posted_api_ok};
+    	   <<"OK">> -> {ok, posted_to_api};
 	   {error, Reason} -> {error, Reason};
   	   Else -> {error, Else}
     end.
@@ -92,15 +92,18 @@ spark_msgarchive_restresponse_test_()->
 
 .
 
+
 sendmissedIM_rest_response_empty_test_case()->
-	
-.
+   ?assertError({error, _R},check_sendmissedIM_response([])).
 
 sendmissedIM_rest_response_valid_case() ->
-.
+   Response = [{<<"code">>, <<"200">>}, {<<"status">>,<<"OK">>}, {<<"data">>, <<"">>}], 
+   ?assertMatch({ok, posted_to_api},check_sendmissedIM_response(Response)).
 
 sendmissedIM_rest_response_error_case()->
-.
+   Response = [{<<"code">>, <<"200">>, {<<"status">>, <<"Unauthorized">>}, 
+                [{<<"code">>, <<"41002">>},{<<"message">>, <<"SomeReason">>}]],
+   ?assertError({error, _R}, check_sendmissedIM_response(Response)).
 
 setup() ->   
     ok.
