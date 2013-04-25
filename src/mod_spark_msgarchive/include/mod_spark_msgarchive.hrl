@@ -11,3 +11,5 @@
 -type configValue() ::atom() | integer() | string() | term()| tuple().
 -record (mod_spark_msgarchive_config, {conf:: [atom(), term()]} ).
 -define(CURRENT_FUNCTION_NAME(), element(2, element(2, process_info(self(), current_function)))).
+-define(AUTHENTICATED, 200).
+-define(DefaultType, json).
