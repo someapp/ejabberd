@@ -56,6 +56,21 @@ sendMissedMessages(Messages) ->
 %% .
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+start()->
+  gen_server:start().
+
+stop(Module)->
+  gen_server:stop(Module, stop);
+
+stop()->
+   stop(?Module).
+
+state
+
+
+
+
 init([])->
   %%load the config default
   %%check config
@@ -76,11 +91,17 @@ init(Args)->
 
 handle_cast/2, 
 
-handle_info/2,
+handle_info(_Info, State)->
+  ?INFO_MSG("~p Terminiate ~p with reason ~p~n", [?CURRENT_FUNCTION_NAME(), ?Module, _Reason]), 
+  {noreply, State}.
 
-terminate/2, 
+terminate(_Reason, _State)->
+  ?INFO_MSG("~p Terminiate ~p with reason ~p~n", [?CURRENT_FUNCTION_NAME(), ?Module, _Reason]),  
+  ok. 
 
-code_change/3
+code_change(OldVsn, _State, _Extra)->
+  ?INFO_MSG("~p Code Change from version ~p~n", [?CURRENT_FUNCTION_NAME(), OldVsn]),
+  {ok, _State}.
 
 
 

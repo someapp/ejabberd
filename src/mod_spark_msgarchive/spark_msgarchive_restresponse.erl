@@ -35,7 +35,7 @@
 %% @doc check for the authentication http post response for Success is true and error term is null
 %%      anything else is error and considered authentication error and failed.
 %% @end
--spec check_sendmissedIM_response(Body::restResponse())-> {ok, authenticated} | {error, reason()}.
+-spec check_sendmissedIM_response(Body::restResponse())-> {ok, posted_api_ok}| {error, reason()}.
 check_sendmissedIM_response(Body) ->
    ?DEBUG("~p Check sendmissedIM Response Body ~p~n", [?CURRENT_FUNCTION_NAME(),Body]),
    case illegal_Post_Response(Body) of
