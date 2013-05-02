@@ -1,15 +1,14 @@
--include ("mod_spark_msgarchive_version.hrl").
 -type host()::string().
--type method() :: head | get | put | post | trace | options | delete.
+-type method()::head | get | put | post | trace | options | delete.
 -type user()::string().
--type url() :: string().
--type accessToken() :: string().
--type reason() :: term().
--type result() :: tuple().
+-type url()::string().
+-type accessToken()::string().
+-type reason()::term().
+-type result()::tuple().
 -type reply()::{ok, result()} | {error, reason()}.
--type configKey() ::atom().
--type configValue() ::atom() | integer() | string() | term()| tuple().
--record (mod_spark_msgarchive_config, {conf:: [atom(), term()]} ).
+-type configKey()::atom().
+-type configValue()::atom() | integer() | string() | term()| tuple().
+%%-record (mod_spark_msgarchive_config, {conf:: [atom(), term()]}).
 -define(CURRENT_FUNCTION_NAME(), element(2, element(2, process_info(self(), current_function)))).
 -define(AUTHENTICATED, 200).
 -define(DefaultType, json).
