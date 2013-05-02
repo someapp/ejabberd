@@ -49,6 +49,7 @@
 %%@end
 -spec sendMissedMessages(Messages::[{string(), string()}]) -> {ok, posted_api_ok}| {error, reason()}.
 sendMissedMessages(Messages) -> 
+  gen_server:call()
  .
 
 %%checkMessageSendStatus(Token) ->
@@ -56,9 +57,17 @@ sendMissedMessages(Messages) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 init([])->
+  %%load the config default
+  %%check config
+  %%check dependence loaded ????
+  %%log or send a notification saying it has started and of what state
   ;
 
 init(Args)->
+  %%load the config default
+  %%check config
+  %%check dependence loaded ????
+  %%log or send a notification saying it has started and of what state  
   .
 
 
