@@ -16,6 +16,14 @@
 -author('etsang@spark.net').
 -behaviour(gen_server).
 
+-include("include/mod_spark_msgarchive.hrl").
+-include("include/mod_spark_msgarchive_version.hrl").
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-include_lib("kernel/include/file.hrl").
+-endif.
+
 %% External exports
 -export([]).
 
@@ -24,21 +32,46 @@
          terminate/2, code_change/3]).
 
 %% server messages
--export([sendMissedMessages/1, checkMessageSendStatus/1]).
+-export([sendMissedMessages/1]). 
+%%, checkMessageSendStatus/1]).
 
 -define(SERVER, ?MODULE).
 -record(sendMissedIM, 
 	{	
-	  brandId,
-	  access_token,
-	  recipientId,
- 	  messages 		
+	  brandId::string(),
+	  access_token::string(),
+	  recipientId::string(),
+ 	  messages::[tuple()] 		
 	}).
 
+%%@doc Send Offline IM messages 
+%%
+%%@end
+-spec sendMissedMessages(Messages::[{string(), string()}]) -> {ok, posted_api_ok}| {error, reason()}.
+sendMissedMessages(Messages) -> 
+ .
 
+%%checkMessageSendStatus(Token) ->
+%% .
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+init([])->
+  ;
+
+init(Args)->
+  .
+
+
+
 %handle_call()-> ;
+
+handle_cast/2, 
+
+handle_info/2,
+
+terminate/2, 
+
+code_change/3
 
 
 
