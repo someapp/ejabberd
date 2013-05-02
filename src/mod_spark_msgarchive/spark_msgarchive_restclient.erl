@@ -48,8 +48,9 @@
 %%
 %%@end
 -spec sendMissedMessages(Messages::[{string(), string()}]) -> {ok, posted_api_ok}| {error, reason()}.
-sendMissedMessages(Messages) -> 
-  gen_server:call()
+sendMissedMessages(Pid, Messages) -> 
+  State = #sendMissedIM
+  gen_server:call(Pid, {sendMissedMessages, )
  .
 
 %%checkMessageSendStatus(Token) ->
@@ -87,9 +88,14 @@ init(Args)->
 
 
 
-%handle_call()-> ;
+handle_call({sendMissedMessages, #sendMissedIM}, _From, )-> 
 
-handle_cast/2, 
+;
+
+handle_cast{{sendMissedMessagesAsync, #sendMissedIM}, } ->
+
+
+. 
 
 handle_info(_Info, State)->
   ?INFO_MSG("~p Terminiate ~p with reason ~p~n", [?CURRENT_FUNCTION_NAME(), ?Module, _Reason]), 
