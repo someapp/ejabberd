@@ -15,33 +15,38 @@
 -module(spark_msgarchive_restresponse).
 -author('etsang@spark.net').
 
--export([check_missedIM_rest_response/1]).
+-export([check_sendmissedIM_response/1]).
+-type restResponse()::{tuple()}.
+
+-include("ejabberd.hrl").
+-include("include/mod_spark_msgarchive.hrl").
+-include("include/mod_spark_msgarchive_version.hrl").
+
+%%-include("jlib.hrl").
+%%-include("web/ejabberd_http.hrl").
+%%-include("web/ejabberd_web_admin.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("kernel/include/file.hrl").
 -endif.
 
-%% @doc 
-%% @end
--spec check_missedIM_rest_response() -> {ok, delivered} | {error, reason()}.
-check_missedIM_rest_response(Body)->
-    ?DEBUG("~p Check Send MissedIM Response Body ~p~n", [?CURRENT_FUNCTION_NAME(),Body]),
-    
-.
-
 %% @private
 %% @doc check for the authentication http post response for Success is true and error term is null
 %%      anything else is error and considered authentication error and failed.
 %% @end
--spec check_auth_response(AuthStatus::[tuple()]) -> {ok, authenticated} | {error, term()} | term().
+-spec check_sendmissedIM_response(Body::restResponse())-> {ok, authenticated} | {error, reason()}.
 check_sendmissedIM_response(Body) ->
    ?DEBUG("~p Check sendmissedIM Response Body ~p~n", [?CURRENT_FUNCTION_NAME(),Body]),
    case Illegal_Post_response(Body)->
         {ok, not_badpost} -> check_for_validStatus(Body);
 	{error, Reason} -> {erro, Reason}
    end.
-  
+
+ 
+%% @doc Check for rest response has all the criteria for a success call to sendmissedIM restapi 
+%% @end
+-spec check_for_validStatus(Body::restResponse())->{ok, posted_api_ok} | {error, reason()}.
 check_for_validStatus(Body) ->
    V = case check_200_status(Body) of
 	 {ok, posted_to_api} -> {ok, posted_to_api};
@@ -54,6 +59,9 @@ check_for_validStatus(Body) ->
    V1.
    end.
 
+%% @doc Check for rest response http status is 200 
+%% @end
+-spec check_200_status(Body::restresponse()) -> {ok, posted_to_api} | {error, reason()}.
 check_200_status(Body) ->
     case proplists:get_value(<<"code">>) of
              <<"200">> -> {ok, posted_to_api};
@@ -61,6 +69,9 @@ check_200_status(Body) ->
   	     Else -> {error, Else}
     end.
 
+%% @doc Check for rest response status string is ok 
+%% @end
+-spec check_Ok_status(Body::restresponse()) -> {ok, posted_to_api} | {error, reason()}.
 check_Ok_status(Body) -> 
     case proplists:get_value(<<"status">>) of
     	   <<"OK">> -> {ok, posted_to_api};
@@ -68,6 +79,10 @@ check_Ok_status(Body) ->
   	   Else -> {error, Else}
     end.
 
+%% @doc the v2 restapi has inconsistent format for rest response. A bad post body has an extra
+%% 	Result: level.  
+%% @end
+-spec Illegal_Post_response(Body::restresponse()) -> {ok, not_badpost} | {error, post_unsupported}.
 Illegal_Post_response(Body)->
     ?DEBUG("~p Illegal Post Response Body ~p~n", [?CURRENT_FUNCTION_NAME(),Body]),
     case proplist:get_value(<<"Result">> , Body) of
@@ -84,14 +99,13 @@ spark_msgarchive_restresponse_test_()->
       fun setup/0,
       fun cleanup/1,
       [
-       fun sendmissedIM_rest_response_empty_test_case/0,
-       fun sendmissedIM_rest_response_valid_case/0,
-       fun sendmissedIM_rest_response_error_case/0
+        fun sendmissedIM_rest_response_empty_test_case/0,
+        fun sendmissedIM_rest_response_valid_case/0,
+        fun sendmissedIM_rest_response_error_case/0,
+        fun sendmissedIM_rest_response_badpost_case/0,
+   	fun sendmissedIM_rest_response_notbadpost_case/0
       ]
     }.
-
-.
-
 
 sendmissedIM_rest_response_empty_test_case()->
    ?assertError({error, _R},check_sendmissedIM_response([])).
@@ -105,10 +119,23 @@ sendmissedIM_rest_response_error_case()->
                 [{<<"code">>, <<"41002">>},{<<"message">>, <<"SomeReason">>}]],
    ?assertError({error, _R}, check_sendmissedIM_response(Response)).
 
+sendmissedIM_rest_response_badpost_case()->
+  Response = [{ <<"Result">> ,{<<"code">>, <<"200">>}, {<<"status">>,<<"OK">>}, {<<"data">>, <<"">>}}], 
+  ?assertError({error, post_unsupported},Illegal_Post_response(Response)).
+
+sendmissedIM_rest_response_notbadpost_case()->
+  Response = [{<<"code">>, <<"500">>}, {<<"status">>,<<"NOK">>}, {<<"data">>, <<"">>}], 
+  ?assertMatch({ok, not_badpost},Illegal_Post_response(Response)).
+
+
 setup() ->   
     ok.
 
 cleanup(_Pid) ->
     ok.
 
--endif
+
+
+
+
+-endif.
