@@ -16,7 +16,7 @@
 -author('etsang@spark.net').
 
 -export([check_sendmissedIM_response/1]).
--type restResponse()::{tuple()}.
+-type restResponse()::tuple().
 
 -include("ejabberd.hrl").
 -include("include/mod_spark_msgarchive.hrl").
@@ -38,7 +38,7 @@
 -spec check_sendmissedIM_response(Body::restResponse())-> {ok, authenticated} | {error, reason()}.
 check_sendmissedIM_response(Body) ->
    ?DEBUG("~p Check sendmissedIM Response Body ~p~n", [?CURRENT_FUNCTION_NAME(),Body]),
-   case Illegal_Post_response(Body)->
+   case illegal_Post_Response(Body) of
         {ok, not_badpost} -> check_for_validStatus(Body);
 	{error, Reason} -> {erro, Reason}
    end.
@@ -50,20 +50,22 @@ check_sendmissedIM_response(Body) ->
 check_for_validStatus(Body) ->
    V = case check_200_status(Body) of
 	 {ok, posted_to_api} -> {ok, posted_to_api};
- 	 {error, Reason} -> {error, Reason};
+ 	 {error, Reason} -> {error, Reason}
        end,
-   V1 = case check_Ok_status(Body) of
-          {ok, posted_api_ok} -> {ok, posted_api_ok};
-          {error, Reason} -> {error, Reason};
-        end,
-   V1.
+   case V of
+	{ok, posted_to_api}-> case check_Ok_status(Body) of
+          			   {ok, posted_api_ok} -> {ok, posted_api_ok};
+          			   {error, Reason1} -> {error, Reason1}
+          		      end;
+        {error, Else} -> {error, Else}
    end.
+
 
 %% @doc Check for rest response http status is 200 
 %% @end
--spec check_200_status(Body::restresponse()) -> {ok, posted_to_api} | {error, reason()}.
+-spec check_200_status(Body::restResponse()) -> {ok, posted_to_api} | {error, reason()}.
 check_200_status(Body) ->
-    case proplists:get_value(<<"code">>) of
+    case proplists:get_value(<<"code">>, Body) of
              <<"200">> -> {ok, posted_to_api};
 	     {error, Reason} -> {error, Reason};
   	     Else -> {error, Else}
@@ -71,28 +73,28 @@ check_200_status(Body) ->
 
 %% @doc Check for rest response status string is ok 
 %% @end
--spec check_Ok_status(Body::restresponse()) -> {ok, posted_to_api} | {error, reason()}.
+-spec check_Ok_status(Body::restResponse()) -> {ok, posted_to_api} | {error, reason()}.
 check_Ok_status(Body) -> 
-    case proplists:get_value(<<"status">>) of
+    case proplists:get_value(<<"status">>, Body) of
     	   <<"OK">> -> {ok, posted_to_api};
 	   {error, Reason} -> {error, Reason};
   	   Else -> {error, Else}
     end.
 
 %% @doc the v2 restapi has inconsistent format for rest response. A bad post body has an extra
-%% 	Result: level.  
+%% 	"Result:" level  
 %% @end
--spec Illegal_Post_response(Body::restresponse()) -> {ok, not_badpost} | {error, post_unsupported}.
-Illegal_Post_response(Body)->
+-spec illegal_Post_Response(Body::restResponse()) -> {ok, not_badpost} | {error, post_unsupported}.
+illegal_Post_Response(Body)->
     ?DEBUG("~p Illegal Post Response Body ~p~n", [?CURRENT_FUNCTION_NAME(),Body]),
     case proplist:get_value(<<"Result">> , Body) of
-	 undefined -> {ok, not_badpost},
+	 undefined -> {ok, not_badpost};
          _List -> {error, post_unsupported} 
     end.
 
 
 %%%%%% EUNIT %%%%%%%%%%%%%%%%%%
--ifded(TEST).
+-ifdef(TEST).
 
 spark_msgarchive_restresponse_test_()->
     { setup,
@@ -121,11 +123,11 @@ sendmissedIM_rest_response_error_case()->
 
 sendmissedIM_rest_response_badpost_case()->
   Response = [{ <<"Result">> ,{<<"code">>, <<"200">>}, {<<"status">>,<<"OK">>}, {<<"data">>, <<"">>}}], 
-  ?assertError({error, post_unsupported},Illegal_Post_response(Response)).
+  ?assertError({error, post_unsupported},illegal_Post_response(Response)).
 
 sendmissedIM_rest_response_notbadpost_case()->
   Response = [{<<"code">>, <<"500">>}, {<<"status">>,<<"NOK">>}, {<<"data">>, <<"">>}], 
-  ?assertMatch({ok, not_badpost},Illegal_Post_response(Response)).
+  ?assertMatch({ok, not_badpost},illegal_Post_response(Response)).
 
 
 setup() ->   
