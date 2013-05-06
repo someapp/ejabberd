@@ -15,6 +15,7 @@
 		{I, start_link, []}, 
 		permanent, 5000, Type, [I]
 	}).
+
 -define(RestartStrategy, one_for_one).
 -define(MaximumRetry, 5).
 -define(RestartIntervalInSec, 10).

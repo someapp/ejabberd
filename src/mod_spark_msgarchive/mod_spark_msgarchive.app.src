@@ -6,10 +6,12 @@
   {applications, [
                   kernel,
                   stdlib,
-		  inets,
+		  inets, 
 		  crypto,
 		  public_key,
-		  ssl
+		  ssl,
+		  sasl,
+		  rlimit
                  ]},
   {mod, { mod_spark_msgarhive_app, []}},
   {env, [

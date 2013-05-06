@@ -50,7 +50,7 @@
 -spec sendMissedMessages(Messages::[{string(), string()}]) -> {ok, posted_api_ok}| {error, reason()}.
 sendMissedMessages(Pid, Messages) -> 
   State = #sendMissedIM
-  gen_server:call(Pid, {sendMissedMessages, )
+  gen_server:call(Pid, {sendMissedMessages, #sendMissedIM)
  .
 
 %%checkMessageSendStatus(Token) ->
