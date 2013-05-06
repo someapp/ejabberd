@@ -51,10 +51,33 @@
 %%
 %%@end
 -spec sendMissedMessages(Messages::[{string(), string()}]) -> {ok, posted_api_ok}| {error, reason()}.
-sendMissedMessages(Pid, Messages) -> 
+sendMessageSync(Pid, Messages) -> 
   State = #sendMissedIM
-  gen_server:call(Pid, {sendMissedMessages, #sendMissedIM)
+  gen_server:call(Pid, {sendMessageSync, #sendMissedIM})
  .
+
+-spec sendMessageAsync(Messages::[{string(), string()}]) -> {ok, posted_api_ok}| {error, reason()}.
+sendMessageAsync(Pid, Messages) -> 
+  State = #sendMissedIM
+  gen_server:call(Pid, {sendMessageASync, #sendMissedIM})
+ .
+
+enqueueMessageForRetry(Pid, Messages) ->
+  State = #sendMissedIM
+  gen_server:call(Pid, {enqueueForRetry, #sendMissedIM}).
+
+enqueueDeadMessage(Pid, Messages) ->
+  State = #sendMissgedIM
+  gen_server:cast(Pid, {enqueueDeadMessage, #sendMissedIM}).
+
+dequeueMessageFromLive(Pid) ->
+  gen_server:call(Pid).
+
+dequeueMessagesFromRetry(Pid) ->
+  gen_server:call(Pid).
+
+
+
 
 %%checkMessageSendStatus(Token) ->
 %% .
