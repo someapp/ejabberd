@@ -38,6 +38,9 @@
 -define(SERVER, ?MODULE).
 -record(sendMissedIM, 
 	{	
+	  from_queue:string(),
+	  local_retry::integer(),
+	  start_time::tuple(),
 	  brandId::string(),
 	  access_token::string(),
 	  recipientId::string(),
@@ -89,28 +92,39 @@ init(Args)->
 
 
 handle_call({sendMissedMessages, #sendMissedIM}, _From, )-> 
-
-;
+   
+  .
 
 handle_cast{{sendMissedMessagesAsync, #sendMissedIM}, } ->
 
 
-. 
+  . 
 
 handle_info(_Info, State)->
-  ?INFO_MSG("~p Terminiate ~p with reason ~p~n", [?CURRENT_FUNCTION_NAME(), ?Module, _Reason]), 
+  %?INFO_MSG("~p Terminiate ~p with reason ~p~n", [?CURRENT_FUNCTION_NAME(), ?Module, _Reason]), 
   {noreply, State}.
 
 terminate(_Reason, _State)->
-  ?INFO_MSG("~p Terminiate ~p with reason ~p~n", [?CURRENT_FUNCTION_NAME(), ?Module, _Reason]),  
+  %?INFO_MSG("~p Terminiate ~p with reason ~p~n", [?CURRENT_FUNCTION_NAME(), ?Module, _Reason]),  
   ok. 
 
-code_change(OldVsn, _State, _Extra)->
-  ?INFO_MSG("~p Code Change from version ~p~n", [?CURRENT_FUNCTION_NAME(), OldVsn]),
-  {ok, _State}.
+code_change(OldVsn, State, _Extra)->
+  %?INFO_MSG("~p Code Change from version ~p~n", [?CURRENT_FUNCTION_NAME(), OldVsn]),
+  lager:info("Code Change from version ~p~n",[OldVsn]),
+  {ok, State}.
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+get_send_missedIM_endPoint()->
+   mod_spark_config_common: 
+
+get_imMessage_payload([Messages])->
+
+   
+
+
+
 
 
