@@ -38,7 +38,7 @@
 -define(SERVER, ?MODULE).
 -record(sendMissedIM, 
 	{	
-	  from_queue:string(),
+	  from_queue::string(),
 	  local_retry::integer(),
 	  start_time::tuple(),
  	  processed_time:tuple(),
@@ -46,6 +46,20 @@
 	  access_token::string(),
 	  recipientId::string(),
  	  messages::[tuple()] 		
+	}).
+
+-record(state,
+	{ 
+	  baseServiceApi::string(),
+	  restc_retry_attempt::integer(),
+	  restc_timeout::integer(),
+	  restc_retry_interval::integer(),
+	  rabbiqMQ_liveQ::string(),
+  	  rabbitMQ_retryQ::string(),
+	  rabbitMQ_deadQ::string(),
+          rabbitc_retry_attempt::integer(), 
+	  rabbitc_timeout::integer(),
+	  rabbitc_retry_interval::integer()
 	}).
 
 %%@doc Send Offline IM messages 
