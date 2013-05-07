@@ -36,8 +36,11 @@
 -define(APP_ENV,mod_spark_msgarchive).
 -define(DEFAULT_RESTCONN_TIMEOUT,5).
 -define(DEFAULT_RESTCONN_RETRY,3).
+-define(DEFAULT_RESTCONN_RETRY_INTERVAL,1),
+
 -define(DEFAULT_RABBITCONN_TIMEOUT,5).
 -define(DEFAULT_RABBITCONN_RETRY,3).
+-define(DEFAULT_RABBITCONN_RETRY_INTERVAL,1),
 
 %% ===================================================================
 %% Public API
@@ -84,6 +87,13 @@ rest_client_timeout_in_sec() ->
 rest_call_retry_attempt() ->
     mod_spark_config_common:rest_call_retry_attempt().
 
+%% @doc Get rest client connection retry attempt interval in sec.
+%% @end
+-spec rest_client_retry_interval()-> integer().
+rest_client_retry_interval() ->
+    mod_spark_config_common:get_mod_spark_common_env(rest_call_retry_interval,?DEFAULT_RESTCONN_RETRY_INTERVAL).
+
+
 %% @doc Get the rabbitmq client connection timeout environment variable.
 %% @end
 -spec rabbitmq_client_timeout_in_sec() -> integer().
@@ -95,6 +105,34 @@ rabbitmq_client_timeout_in_sec() ->
 -spec rabbitmq_client_retry_attempt()-> integer().
 rabbitmq_client_retry_attempt() ->
     mod_spark_config_common:rabbitmq_client_retry_attempt().
+
+%% @doc Get the rabbitmq client connection retry attempt  variable.
+%% @end
+-spec rabbitmq_client_retry_interval()-> integer().
+rabbitmq_client_retry_interval() ->
+    mod_spark_config_common:get_mod_spark_common_env(rabbitmq_call_retry_interval,?DEFAULT_RABBITCONN_RETRY_INTERVAL).
+
+
+%% @doc Get the rabbitmq client connection retry attempt  variable.
+%% @end
+-spec rabbitmq_client_liveQ()-> string() | {error, not_found}.
+rabbitmq_client_liveQ() ->
+    mod_spark_config_common:get_mod_spark_common_env(rabbitmq_call_liveQ,{error, not_found}).
+
+
+%% @doc Get the rabbitmq client connection retry attempt  variable.
+%% @end
+-spec rabbitmq_client_retryQ()-> string() | {error, not_found}.
+rabbitmq_client_retryQ() ->
+    mod_spark_config_common:get_mod_spark_common_env(rabbitmq_call_retryQ,{error,not_found}).
+
+
+%% @doc Get the rabbitmq dead queue.
+%% @end
+-spec rabbitmq_client_deadQ()-> string() | {error, not_found}.
+rabbitmq_client_deadQ() ->
+    mod_spark_config_common:get_mod_spark_common_env(rabbitmq_call_deadQ, {error, not_found}).
+
 
 %% ===================================================================
 %% EUnit tests

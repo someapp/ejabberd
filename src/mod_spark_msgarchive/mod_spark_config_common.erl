@@ -14,13 +14,14 @@
 
 -export([spark_api_endpoint/0, 
 	 spark_oauth_access_token/0, 
-
 	 auth_profile_miniProfile/0, 
 	 rabbitmq_endpoint/0,
  	 rest_client_timeout_in_sec/0,
  	 rest_call_retry_attempt/0,
  	 rabbitmq_client_timeout_in_sec/0,
  	 rabbitmq_client_retry_attempt/0,
+	 get_mod_spark_common_env/1,
+	 get_mod_spark_common_env/2
        ]).
 
 -include("ejabberd.hrl").
