@@ -154,7 +154,31 @@ send_to_api(Pid, Message)->
   
   .
 
-   
+%% ===================================================================
+%% EUnit tests
+%% ===================================================================
+-ifdef(TEST).
+-define(DEFAULTVAL, "DefaultTestVal").
+spark_msgarchive_restclient_test_() ->
+    { setup,
+      fun setup/0,
+      fun cleanup/1,
+      [
+       fun send_missed_im_sync_ok_test_case/0,
+       fun send_missed_im_async_ok_test_case/0,
+       fun send_missed_im_sync_nok_test_case/0,
+       fun send_missed_im_async_nok_test_case/0,
+       fun send_missed_im_sync_timeout_test_case/0,
+       fun send_missed_im_async_timeout_test_case/0,
+       fun dequeue_from_liveQ_test_case/0,
+       fun dequeue_from_retryQ_test_case/0,
+       fun enqueue_to_retryQ_test_case/0,
+       fun enqueue_to_deadQ_test_case/0
+
+      ]
+    }.
+
+-endif.  
 
 
 

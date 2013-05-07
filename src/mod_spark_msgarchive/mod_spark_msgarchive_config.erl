@@ -109,7 +109,7 @@ mod_spark_msgarchive_config_test_() ->
        fun spark_api_endpoint_test_case/0,
        fun spark_oauth_access_token_test_case/0,
        fun send_missed_im_endpoint_test_case/0,
-       fun auth_profile_miniProfile_endpoint_test_cas/0,
+       fun auth_profile_miniProfile_endpoint_test_case/0,
        fun rabbitmq_endpoint_test_case/0,
        fun rabbitmq_client_timeout_in_test_case/0,
        fun rabbitmq_client_retry_attempt_in_test_case/0,
