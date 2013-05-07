@@ -41,6 +41,7 @@
 	  from_queue:string(),
 	  local_retry::integer(),
 	  start_time::tuple(),
+ 	  processed_time:tuple(),
 	  brandId::string(),
 	  access_token::string(),
 	  recipientId::string(),
@@ -110,6 +111,8 @@ init(Args)->
   %%check config
   %%check dependence loaded ????
   %%log or send a notification saying it has started and of what state  
+mod_spark_msgarchive_config:
+mod_spark_config_common:
   .
 
 
@@ -144,6 +147,12 @@ get_send_missedIM_endPoint()->
    mod_spark_config_common: 
 
 get_imMessage_payload([Messages])->
+
+
+send_to_api(Pid, Message)->
+   
+  
+  .
 
    
 
