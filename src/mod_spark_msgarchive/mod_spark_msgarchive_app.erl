@@ -45,6 +45,11 @@
 %% Application callbacks
 %% ===================================================================
 
+start()->
+   start(_,_).
+start(_)->
+   start(_,_).
+
 start(_StartType, _StartArgs) ->
      ApiConf = get_service_api_config(),
      RestCConf = get_restClient_config(),
@@ -55,6 +60,9 @@ start(_StartType, _StartArgs) ->
 	{error, Reason} -> {error, Reason}
 	Else -> {error, Else}
      end.
+
+stop()->
+   stop(_).
 
 stop(_State) ->   
     ok.
