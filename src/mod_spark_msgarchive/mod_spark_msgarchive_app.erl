@@ -49,8 +49,8 @@
 start(_StartType, _StartArgs) ->
      ApiConf = get_service_api_config(),
      RestCConf = get_restClient_config(),
-     RabbitmqCConf = get_rabbitMQclient_config(),
-     case mod_spark_msgarhive_sup:start_link() of 
+     RabbitMQCConf = get_rabbitMQclient_config(),
+     case mod_spark_msgarhive_sup:start_link([ApiConf, RestCConf, RabbitMQCConf]) of 
 	{ok, alread_started} -> ok;
 	ok -> ok;
 	{error, Reason} -> {error, Reason}
