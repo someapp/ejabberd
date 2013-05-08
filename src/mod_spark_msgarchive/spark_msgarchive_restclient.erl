@@ -118,17 +118,19 @@ init([])->
   %%check config
   %%check dependence loaded ????
   %%log or send a notification saying it has started and of what state
-  ;
+  {ok, Conf} = file:consult(io:tolist(?Module)++".cfg"),
+  {ok, #state{}};
 
-init(Args)->
+init(Args) when is_list(Args) ->
   %%load the config default
   %%check config
   %%check dependence loaded ????
-  %%log or send a notification saying it has started and of what state  
-mod_spark_msgarchive_config:
-mod_spark_config_common:
-  .
+  %%log or send a notification saying it has started and of what state
+  {ok, Conf} = file:consult(Args++".cfg"),
+  {ok, #state{conf=Conf}};  
 
+init(_A) ->
+  {error, {failed_init, _A}}.
 
 
 handle_call({sendMissedMessages, #sendMissedIM}, _From, )-> 
@@ -178,6 +180,12 @@ spark_msgarchive_restclient_test_() ->
       fun setup/0,
       fun cleanup/1,
       [
+       fun server_start_ok_default_config_test_case/0.
+       fun server_start_nok_test_case/0,
+       fun server_start_ok_custom_config_test_case/0,
+       fun server_stop_ok_test_case/0,
+       fun server_timeout_test_case/0,
+       fun server_code_change_test_case/0,
        fun send_missed_im_sync_ok_test_case/0,
        fun send_missed_im_async_ok_test_case/0,
        fun send_missed_im_sync_nok_test_case/0,
