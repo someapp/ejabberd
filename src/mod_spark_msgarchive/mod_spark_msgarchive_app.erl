@@ -10,7 +10,6 @@
 -include("mod_spark_msgarchive.hrl").
 -include(""ejabberd.hrl).
 
--define(APP, mod_spark_msgarchive).
 
 %% Application callbacks
 -export([start/2, stop/1]).
@@ -103,7 +102,25 @@ get_rabbitMQclient_config()->
 
 %%%%%% EUNIT %%%%%%%%%%%%%%%%%%
 -ifdef(TEST).
+mod_spark_msgarchive_config_test_() ->
+    { setup,
+      fun setup/0,
+      fun cleanup/1,
+      [
+	get_service_api_config()_test_case/0,
+	get_restClient_config()_test_case/0,
+	get_rabbitMQclient_config()_test_case/0,
+	application_start_test_case/0,
+	application_already_started_test_case/0,
+	applicaiton_stop_test_case/0
+	
+      ]}
 
+setup() ->   
+    application:load(?APP_ENV).
+
+cleanup(_Pid) ->
+    application:stop(?APP_ENV).
 
 -endif.
 
