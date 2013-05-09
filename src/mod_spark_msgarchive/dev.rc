@@ -1,0 +1,4 @@
+echo $ERLANG_HOME
+echo $ERLANG_LIBS
+export PATH=$ERLANG_HOME/bin:$PATH
+          
