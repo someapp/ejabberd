@@ -1,3 +1,4 @@
+-module(mod_spark_msgarhive_config).
 %% -------------------------------------------------------------------
 %% @doc
 %% mod_spark_msgarchive: Ejabberd Application
@@ -8,9 +9,8 @@
 %% -------------------------------------------------------------------
 
 %% @doc A module to provide access to mod_spark_msgarchive configuration information.
--type spark_msgarchive_bucketprops() = [{Propkey :: atom(), Propval :: term()}]
-
--module(mod_spark_msgarchive_config).
+%% @end
+-type spark_msgarchive_bucketprops() = [{Propkey :: atom(), Propval :: term()}].
 -author('etsang@spark.net').
 
 -export([spark_api_endpoint/0, 

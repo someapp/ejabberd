@@ -7,6 +7,7 @@
 %% -------------------------------------------------------------------
 
 %% @doc A module to provide access to mod_spark configuration information.
+%% @end
 -type spark_stun_bucketprops() = [{Propkey :: atom(), Propval :: term()}]
 
 -module(mod_spark_config_common).
