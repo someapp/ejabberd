@@ -157,14 +157,14 @@ getBrandId(SenderId, State) ->
                      	          Else -> {error, Else}
   			     end,
    
-   BrandId = case Val of
+   BrandIdTuple = case Val of
 	{error _} -> {error, undefined};
 	[CommunityId, MemberId] -> case lists:keyfind(Key, 2, List) of
         				{Key, Result} -> Result;
         			    	false -> {error, nothing}
     				   end;
    end,
-   BrandId.
+   extract_brandId(BrandIdTuple).
 
 getTargetMemberId(RecipientId, State) ->
 
