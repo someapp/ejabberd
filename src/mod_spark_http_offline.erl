@@ -45,7 +45,13 @@
 -include("mod_spark_http_offline.hrl").
 
 
--record(message, {from, to, type, subject, body, thread}).
+-record(message, 
+	{from, 
+	 to, 
+	 type, 
+	 subject, 
+	 body, 
+	 thread}).
 
 
 %TODO change it to false at end of cycle
@@ -76,8 +82,7 @@ create_message(From, To, Packet) ->
 %% Internal functions
 %%====================================================================
 post_offline_message(Event, Server, Message) ->
-    Proc = gen_mod:get_module_proc(Server, ?MODULE),
-    
+    Proc = gen_mod:get_module_proc(Server, ?MODULE),    
     gen_server:call(Proc, {post_to_restapi, Event, Message}).
 post_offline_message(Event, User, Server, Resource, Message) ->
     Proc = gen_mod:get_module_proc(Server, ?MODULE),
@@ -95,6 +100,23 @@ parse_message(From, To, {xmlelement, "message", _, _} = Packet) ->
 	_ -> ignore 
    end;
 parse_message(_From, _To, _) -> ignore.
+
+
+getSenderId(Message) ->
+   SenderId = #Message.from,
+   SenderId.
+
+getRecipientId(Message) ->
+   RecipientId = #message.to,
+   RecipientId.
+
+getAccessToken(Message) ->
+   SenderId = getSenderId(Message),
+   
+   AccessToken = #message.
+   AccessToken.
+
+
 
 %%====================================================================
 %% gen_server callbacks
@@ -114,6 +136,7 @@ init([Host, _Opts]) ->
     ClientSetting = gen_mod:get_module_opt(global, ?MODULE, client_settings, undefined),
     Community2BrandId = gen_mod:get_module_opt(global, ?MODULE, community2brandId, undefined),
     SanityTestSetting = gen_mod:get_module_opt(global, ?MODULE, sanity_test_setting, undefined),
+
     ?INFO_MSG("started mod_spark_http_offline", []),
     {ok, #state{
 	 	host = Host, 
@@ -143,7 +166,6 @@ handle_call({post_to_restapi, message_hook, Message}, _From, State, Timeout) ->
 
     post_to_restapi_message:post_to_restapi_message(SenderId, RecipientId, AccessToken, Body, State),
     {reply, ok, State, Timeout};
-
 
 handle_call(stop, _From, State) ->
     {stop, normal, ok, State}.
