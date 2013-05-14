@@ -62,8 +62,11 @@ create_message(_From, _To, Packet) ->
 		FromS = xml:get_tag_attr_s("from", Packet),
 		ToS = xml:get_tag_attr_s("to", Packet),
 		Body = xml:get_path_s(Packet, [{elem, "body"}, cdata]),
+
+		AccessToken xml:get_path(Packet, ["body"], cdata]),
+
 		case Type of
-			"chat" -> post_offline_message(FromS, ToS, Body);
+			"chat" -> post_offline_message(FromS, ToS, AccessToken, Body);
 			{warn, Warn} -> ?WARN_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]), 
 					ok;
 			{error, Reason} -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]),
@@ -74,10 +77,10 @@ create_message(_From, _To, Packet) ->
 
 
 
-post_offline_message(SenderId, RecipientId, Body) ->
+post_offline_message(SenderId, RecipientId, AccessToken, Body) ->
 		?INFO_MSG("Posting From ~p To ~p Body ~p~n",[SenderId, RecipientId, Body]),
             	Messages = lists:concat(["From=", SenderId,"&To=", RecipientId,"&Body=", Body]),		
-		Response = case spark_msgarchive_restclient:sendMissedMessages(SenderId, RecipientId, Messages) of
+		Response = case post_to_restapi(SenderId, RecipientId, Messages) of
 			{ok, _} -> ok;
 			{error, Reason} -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]),
 					    ok;
