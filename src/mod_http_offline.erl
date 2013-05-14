@@ -10,7 +10,7 @@
 %%%----------------------------------------------------------------------
 %%% @end
 
--module(mod_http_offline).
+-module(mod_spark_http_offline).
 
 -author("etsang").
 
