@@ -42,12 +42,13 @@
 start(_Host, _Opt) -> 
 		?INFO_MSG("mod_http_offline loading", []),
 		inets:start(),
+		Config = load_config(),
 		?INFO_MSG("HTTP client started", []),
 		spark_msgarchive_restclient:start(),
 		?INFO_MSG("Spark Rest Client started", []),
+		%% a start up test to post to a test account
 		post_offline_message("testFrom", "testTo", "testBody"),
 		ejabberd_hooks:add(offline_message_hook, _Host, ?MODULE, create_message, 50).   
-
 
 
 stop (_Host) -> 
@@ -114,8 +115,13 @@ post_to_restapi(SenderId, RecipientId, Body) ->
 		   end,
 	Response.
 
-getClientAccessToken()->
+load_config()->
+  {ok, Conf} = file:consult(io:tolist(?Module)++".cfg"),
+  {ok, #state{}};
+.
 
+getClientAccessToken()->
+  
 .
 
 getSendMissedIMUrl()->
