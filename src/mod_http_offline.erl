@@ -76,19 +76,62 @@ create_message(_From, _To, Packet) ->
 post_offline_message(SenderId, RecipientId, Body) ->
 		?INFO_MSG("Posting From ~p To ~p Body ~p~n",[SenderId, RecipientId, Body]),
             	Messages = lists:concat(["From=", SenderId,"&To=", RecipientId,"&Body=", Body]),		
-		Ret = case spark_msgarchive_restclient:sendMissedMessages(SenderId, RecipientId, Messages) of
+		Response = case spark_msgarchive_restclient:sendMissedMessages(SenderId, RecipientId, Messages) of
 			{ok, _} -> ok;
 			{error, Reason} -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]),
 					    ok;
 			Else -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Else]),
 				ok;
-		end,		
-		
-		% http:request(post, {"http://localhost/OfflineDemoWebhost/Message/Process",[], 
-		% "application/x-www-form-urlencoded",
-		% Messages}, [], []),
-		?INFO_MSG("post request sent", []),
+		end,	
+		Ret = case verifyResponse(Response) of
+			{ok, _} -> ?INFO_MSG("post request sent", []),
+				   ok;
+			{warn, _Warning} - ?WARN_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), _Warning]),
+					    ok;
+			{error, _R} -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), _Reason]),
+					    {error, _Reason};
+			_Else -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), _Else]),
+				 {error, _Else}
+		     end,	
 		Ret.
+
+
+post_to_restapi(SenderId, RecipientId, Body) ->
+	[BrandId, SourceMemberId] = getBrandIdSrcMemberId(SenderId), 
+	TargetMemberId = getTargetMemberId(RecipientId), 
+	SendMissedIMUrl = getSendMissedIMUrl(),
+	Access_Token = getClientAccessToken(),
+	Url = restc:construct(),
+	Response = case restc:request(post, json, Url, [200],[],[""]) of 
+			{ok, S} -> ?INFO_MSG("post request sent", []),
+				   {ok, S};
+			{warn, Warning} - ?WARN_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Warning]),
+					  {warn, Warning};
+			{error, Reason} -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]),
+					    {error, Reason};
+			Else -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Else]),
+				 {error, Else}
+		   end,
+	Response.
+
+getClientAccessToken()->
+
+.
+
+getSendMissedIMUrl()->
+
+.
+
+
+getBrandIdSrcMemberId(SenderId) ->
+
+.
+
+getTargetMemberId(RecipientId) ->
+
+
+.
+
 
 
 %%%%%% EUNIT %%%%%%%%%%%%%%%%%%
