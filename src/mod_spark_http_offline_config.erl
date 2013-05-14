@@ -14,6 +14,8 @@
 
 -author("etsang").
 
+-include("mod_spark_http_offline.hrl").
+
 -export([
 	getSparksOauthAccessToken/1,
 	getSparkApiEndpoint/1,
