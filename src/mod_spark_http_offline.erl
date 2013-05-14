@@ -54,8 +54,9 @@
 -record(message, {from, to, type, subject, body, thread}).
 
 
-%TODO change it to true at end of cycle
+%TODO change it to false at end of cycle
 -define(TEST, true).
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("kernel/include/file.hrl").
@@ -66,37 +67,52 @@
 -define(DefaultType, json)
 
 
-create_message(_From, _To, Packet) ->
-		Type = xml:get_tag_attr_s("type", Packet),
-		FromS = xml:get_tag_attr_s("from", Packet),
-		ToS = xml:get_tag_attr_s("to", Packet),
-		Body = xml:get_path_s(Packet, [{elem, "body"}, cdata]),
-
-		AccessToken xml:get_path(Packet, ["body"], cdata]),
-
-		case Type of
-			"chat" -> post_offline_message(FromS, ToS, AccessToken, Body);
-			{warn, Warn} -> ?WARN_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]), 
-					ok;
-			{error, Reason} -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]),
-					    ok;
-	 		Else -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Else]),
+create_message(From, To, Packet) ->
+	case parse_message(From, To, Packet) ->
+	     ignore -> ok;
+	     {error, Error} -> ?ERROR_MSG("Parse Message Failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, Error}]),
 				ok;
-		end.
+
+	     Message ->
+		     post_offline_message(message_hook, From#jid.server, Message), 
+		     ok
+	end.
+
+%%====================================================================
+%% Internal functions
+%%====================================================================
+post_offline_message(Event, Server, Message) ->
+    Proc = gen_mod:get_module_proc(Server, ?MODULE),
+    gen_server:call(Proc, {post_to_restapi, Event, Message}).
+post_offline_message(Event, User, Server, Resource, Message) ->
+    Proc = gen_mod:get_module_proc(Server, ?MODULE),
+    gen_server:call(Proc, {post_to_restapi, Event, User, Server, Resource, Message}).
 
 
+parse_message(From, To, {xmlelement, "message", _, _} = Packet) ->
+    %IsJustOffLine = checkTargetMemberStatus(),
+    Type    = xml:get_tag_attr_s("type", Packet),
+    case Type of
+	"chat" ->   Subject = get_tag_from("subject", Packet),
+    		    Body    = get_tag_from("body", Packet),
+		    Thread  = get_tag_from("thread", Packet),
+		    #message{from = jlib:jid_to_string(From), to = jlib:jid_to_string(To), type = Type, subject = Subject, body = Body, thread = Thread};
+	_ -> ignore 
+   end;
+parse_message(_From, _To, _) -> ignore.
 
-post_offline_message(SenderId, RecipientId, AccessToken, Body) ->
+
+post_to_restapi_message(SenderId, RecipientId, AccessToken, Body, State) ->
 		?INFO_MSG("Posting From ~p To ~p Body ~p~n",[SenderId, RecipientId, Body]),
-            	Messages = lists:concat(["From=", SenderId,"&To=", RecipientId,"&Body=", Body]),		
-		Response = case post_to_restapi(SenderId, RecipientId, Messages) of
+						
+		Response = case post_to_restapi(BrandId, AccessToken, RecipientId, Messages, State) of
 			{ok, _} -> ok;
 			{error, Reason} -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Reason]),
 					    ok;
 			Else -> ?ERROR_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), Else]),
 				ok;
 		end,	
-		Ret = case verifyResponse(Response) of
+		Ret = case check_sendmissedIM_response(Response) of
 			{ok, _} -> ?INFO_MSG("post request sent", []),
 				   ok;
 			{warn, _Warning} - ?WARN_MSG("~p with status ~p~n", [?CURRENT_FUNCTION_NAME(), _Warning]),
@@ -109,12 +125,18 @@ post_offline_message(SenderId, RecipientId, AccessToken, Body) ->
 		Ret.
 
 
-post_to_restapi(SenderId, RecipientId, Body) ->
-	[BrandId, SourceMemberId] = getBrandIdSrcMemberId(SenderId), 
-	TargetMemberId = getTargetMemberId(RecipientId), 
-	SendMissedIMUrl = getSendMissedIMUrl(),
-	Access_Token = getClientAccessToken(),
-	Url = restc:construct(),
+post_to_restapi(BrandId, AccessToken, RecipientId, Messages, State) ->
+	BaseServiceUrl = mod_spark_http_offline_config:getSparkApiEndpoint(State),
+	SendMissedIMUrl = mod_spark_http_offline_configgetSendMissedIMUrl(State),
+%%%% Somehow get the AccessToken and RecipientId %%%%
+	Access_Token = AccessToken,
+	RecipientId = RecipientId,
+        ResourceEndpoint1 = re:replace(SendMissedIMUrl, "{brandId}", BrandId, [global, {return, list}]),
+	Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint1,
+					[{"access_token", AccessToken},
+					 {"RecipientMemberId",RecipientId },
+					 {"Messages", Messages}]),
+
 	Response = case restc:request(post, json, Url, [200],[],[""]) of 
 			{ok, S} -> ?INFO_MSG("post request sent", []),
 				   {ok, S};
@@ -127,122 +149,71 @@ post_to_restapi(SenderId, RecipientId, Body) ->
 		   end,
 	Response.
 
-%%%%% Rest and RabbitMQClient %%%%%
+%% @private
+%% @doc check for the authentication http post response for Success is true and error term is null
+%%      anything else is error and considered authentication error and failed.
+%% @end
+-spec check_sendmissedIM_response(Body::restResponse())-> {ok, posted_api_ok}| {error, reason()}.
+check_sendmissedIM_response(Body) ->
+   ?DEBUG("~p Check sendmissedIM Response Body ~p~n", [?CURRENT_FUNCTION_NAME(),Body]),
+   case illegal_Post_Response(Body) of
+        {ok, not_badpost} -> check_for_validStatus(Body);
+	{error, Reason} -> {erro, Reason}
+   end.
 
-getSparksOauthAccessToken(State)->
-   AccessToken=getVal_for(spark_oauth_access_token, #State.urls),
-   AccessToken.
-
-getSparkApiEndpoint(State)->
-   ApiUrl = getVal_for(spark_api_endpoint, #State.urls),
-   ApiUrl.
-
-getSendMissedIMUrl(State)->
-   SendMissedIMUrl = getVal_for(send_missed_im, #State.urls),
-   SendMissedIMUrl.
-
-getRabbitMQEndpoint(State)->
-   RabbitMQEndpoint = getVal_for(rabbitmq_endpoint, #State.urls),
-   RabbitMQEndpoint.
-
-getProfileMemberStatus(State)->
-   ProfileMemberStatus = getVal_for(profile_memberstatus, #State.urls),
-   ProfileMemberStatus.
-
-getBrandId(SenderId, State) ->
-   CommunityIdBrandIdMap = getVal_for(community2brandId, #State.community2brandId),
-   Val = case re:split(UserName,"-") of 
- 		     		  [CommunityId, MemberId] -> [CommunityId, MemberId];
-                     		  {error, Reason} -> {error, Reason};
-                     	          Else -> {error, Else}
-  			     end,
-   
-   BrandIdTuple = case Val of
-	{error _} -> {error, undefined};
-	[CommunityId, MemberId] -> case lists:keyfind(Key, 2, List) of
-        				{Key, Result} -> Result;
-        			    	false -> {error, nothing}
-    				   end;
-   end,
-   extract_brandId(BrandIdTuple).
-
-getTargetMemberId(RecipientId, State) ->
-
-   MemberId.
-
-%%%%% Rest and RabbitMQClient %%%%%
-getRestClientTimeout(State)->
-   RestClientTimeout = getVal_for(rest_client_timeout_in_sec, #State.client_settings),
-   RestClientTimeout.
-
-getRestRetryAttempt(State)->
-   RestClientTimeout = getVal_for(rest_call_retry_attempt, #State.client_settings),
-   RestClientTimeout.
-
-getRabbitMQClientTimeout(State)->
-   RabbitMQClientTimeout = getVal_for(rabbitmq_client_timeout_in_sec, #State.client_settings),
-   RabbitMQClientTimeout.
-
-getRabbitMQClientRetryAttempt(State)->
-   RabbitMQClientTimeout = getVal_for(rabbitmq_call_retry_attempt, #State.client_settings),
-   RabbitMQClientRetryAttempt.
+ 
+%% @doc Check for rest response has all the criteria for a success call to sendmissedIM restapi 
+%% @end
+-spec check_for_validStatus(Body::restResponse())->{ok, posted_api_ok} | {error, reason()}.
+check_for_validStatus(Body) ->
+   V = case check_200_status(Body) of
+	 {ok, posted_to_api} -> {ok, posted_to_api};
+ 	 {error, Reason} -> {error, Reason}
+       end,
+   case V of
+	{ok, posted_to_api}-> case check_Ok_status(Body) of
+          			   {ok, posted_api_ok} -> {ok, posted_api_ok};
+          			   {error, Reason1} -> {error, Reason1}
+          		      end;
+        {error, Else} -> {error, Else}
+   end.
 
 
-%%%%% Sanity Test Settings %%%%%
-getTestBrandId(State)->
-   TestBrandId = getVal_for(testBrandId, #State.sanity_test_setting), 
-   TestBrandId.
+%% @doc Check for rest response http status is 200 
+%% @end
+-spec check_200_status(Body::restResponse()) -> {ok, posted_to_api} | {error, reason()}.
+check_200_status(Body) ->
+    case proplists:get_value(<<"code">>, Body) of
+             <<"200">> -> {ok, posted_to_api};
+	     {error, Reason} -> {error, Reason};
+  	     Else -> {error, Else}
+    end.
 
-getTestAppId(State)->
-   TestAppId = getVal_for(testBrandId, #State.sanity_test_setting),
-   TestAppId.
+%% @doc Check for rest response status string is ok 
+%% @end
+-spec check_Ok_status(Body::restResponse()) -> {ok, posted_to_api} | {error, reason()}.
+check_Ok_status(Body) -> 
+    case proplists:get_value(<<"status">>, Body) of
+    	   <<"OK">> -> {ok, posted_to_api};
+	   {error, Reason} -> {error, Reason};
+  	   Else -> {error, Else}
+    end.
 
-getTestClientSecret(State)->
-   TestClientSecret = getVal_for(testBrandId, #State.sanity_test_setting),
-   TestClientSecret.
-
-getTestSourceMemberId(State)->
-   TestSourceMemberId = getVal_for(testBrandId, #State.sanity_test_setting),
-   TestSourceMemberId.
-
-getTestSourceMemberEmail(State)->
-   TestSourceMemberEmail = getVal_for(testBrandId, #State.sanity_test_setting),
-   TestSourceMemberEmail.
-
-getTestTargetMemberId(State)->
-   TestTargetMemberId = getVal_for(testBrandId, #State.sanity_test_setting),
-   TestTargetMemberId.
-
-getTestTargetMemberEmail(State)->
-   TestTargetMemberEmail = getVal_for(testBrandId, #State.sanity_test_setting),
-   TestTargetMemberEmail.
-
-getTestTargetMemberPassword(State)->
-   TestTargetMemberPassword = getVal_for(testBrandId, #State.sanity_test_setting),
-   TestTargetMemberPassword.
+%% @doc the v2 restapi has inconsistent format for rest response. A bad post body has an extra
+%% 	"Result:" level  
+%% @end
+-spec illegal_Post_Response(Body::restResponse()) -> {ok, not_badpost} | {error, post_unsupported}.
+illegal_Post_Response(Body)->
+    ?DEBUG("~p Illegal Post Response Body ~p~n", [?CURRENT_FUNCTION_NAME(),Body]),
+    case proplist:get_value(<<"Result">> , Body) of
+	 undefined -> {ok, not_badpost};
+         _List -> {error, post_unsupported} 
+    end.
 
 
-%%%%%%%%%%%%%%Utility Function %%%%%%%%%%%%%%%%
-getVal_for(Key, ValList) ->
-    case lists:keysearch(Key,1,ValList) of
-        {value,{_,Result}} -> Val = Result;
-        _ -> Val = undefined
-    end,
-    Val.   	
-
-url_for(Event, Urls) ->
-    getVal_for(Event, Urls).
-
-client_setting_for(ClientKey, Settings)->
-    getVal_for(ClientKey, Settings).
-
-sanity_test_setting_for(TestSetting, Settings)->
-    getVal_for(TestSetting, Settings).
 
 
-extract_brandId({error, not_found}) -> {error, not_found};
-extract_brandId({_A,_B,C}) -> {ok, {brandid, C}};
-extract_brandId(_)-> {error, not_found}.
+
 
 %%====================================================================
 %% gen_server callbacks
@@ -280,7 +251,7 @@ init([Host, _Opts]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call({post_results, message_hook, Message}, _From, State) ->
+handle_call({post_to_restapi, message_hook, Message}, _From, State) ->
     Data = "from="     ++ ejabberd_http:url_encode(Message#message.from) ++
            "&to="      ++ ejabberd_http:url_encode(Message#message.to) ++
            "&type="    ++ ejabberd_http:url_encode(Message#message.type) ++ 
@@ -289,7 +260,7 @@ handle_call({post_results, message_hook, Message}, _From, State) ->
            "&thread="  ++ ejabberd_http:url_encode(Message#message.thread),
     send_data(message_hook, Data, State),
     {reply, ok, State};
-handle_call({post_results, Event, User, Server, Resource, Message}, _From, State) ->
+handle_call({post_to_restapi, Event, User, Server, Resource, Message}, _From, State) ->
     Data = "user="      ++ ejabberd_http:url_encode(User) ++
            "&server="   ++ ejabberd_http:url_encode(Server) ++
            "&resource=" ++ ejabberd_http:url_encode(Resource) ++ 
