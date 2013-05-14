@@ -1,0 +1,12 @@
+{application,mod_spark_http_offline,
+             [{description,"Spark IM offline message. Spark Rest api v3 or above is the final destination for messages"},
+              {vsn,"1.0.0"},
+              {registered,[]},
+              {applications,[kernel,stdlib,inets,crypto,public_key,ssl]},
+              {mod,{mod_spark_http_offline,[]}},
+              {env,[]},
+              {modules,[app_helper,mod_spark_http_offline,
+                        mod_spark_http_offline_app,
+                        mod_spark_http_offline_config,
+                        mod_spark_http_offline_restclient,
+                        mod_spark_http_offline_sup]}]}.
