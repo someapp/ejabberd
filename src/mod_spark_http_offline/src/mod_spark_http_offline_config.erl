@@ -40,6 +40,11 @@
 %%====================================================================
 
 %% Service Api functions
+%% @doc Get the OAuth Access Token from state record
+%% 
+%% @end
+-spec getSparksOauthAccessToken(State::record())-> string() | {error, ::reason()}.
+ 
 getSparksOauthAccessToken(State)->
    AccessToken=getVal_for(spark_oauth_access_token, State#state.urls),
    AccessToken.
@@ -106,31 +111,35 @@ getTestBrandId(State)->
    TestBrandId.
 
 getTestAppId(State)->
-   TestAppId = getVal_for(testBrandId, State#state.sanity_test_setting),
+   TestAppId = getVal_for(testAppId, State#state.sanity_test_setting),
    TestAppId.
 
 getTestClientSecret(State)->
-   TestClientSecret = getVal_for(testBrandId, State#state.sanity_test_setting),
+   TestClientSecret = getVal_for(testClientSecret, State#state.sanity_test_setting),
    TestClientSecret.
 
 getTestSourceMemberId(State)->
-   TestSourceMemberId = getVal_for(testBrandId, State#state.sanity_test_setting),
+   TestSourceMemberId = getVal_for(testSourceMemberId, State#state.sanity_test_setting),
    TestSourceMemberId.
 
 getTestSourceMemberEmail(State)->
-   TestSourceMemberEmail = getVal_for(testBrandId, State#state.sanity_test_setting),
+   TestSourceMemberEmail = getVal_for(testSourceMemberEmail, State#state.sanity_test_setting),
    TestSourceMemberEmail.
 
+getTestSourceMemberPassword(State)->
+   TestSourceMemberPassword = getVal_for(testSourceMemberPassword, State#state.sanity_test_setting),
+   TestSourceMemberPassword.
+
 getTestTargetMemberId(State)->
-   TestTargetMemberId = getVal_for(testBrandId, State#state.sanity_test_setting),
+   TestTargetMemberId = getVal_for(testTargetMemberId, State#state.sanity_test_setting),
    TestTargetMemberId.
 
 getTestTargetMemberEmail(State)->
-   TestTargetMemberEmail = getVal_for(testBrandId, State#state.sanity_test_setting),
+   TestTargetMemberEmail = getVal_for(testTargetMemberEmail, State#state.sanity_test_setting),
    TestTargetMemberEmail.
 
 getTestTargetMemberPassword(State)->
-   TestTargetMemberPassword = getVal_for(testBrandId, State#state.sanity_test_setting),
+   TestTargetMemberPassword = getVal_for(testTargetMemberPassword, State#state.sanity_test_setting),
    TestTargetMemberPassword.
 
 %%==================================================================
