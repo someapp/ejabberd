@@ -5,7 +5,7 @@
               {applications,[kernel,stdlib,inets,crypto,public_key,ssl]},
               {mod,{mod_spark_http_offline,[]}},
               {env,[]},
-              {modules,[app_helper,mod_spark_http_offline,
+              {modules,[app_helper,gen_mod,mod_spark_http_offline,
                         mod_spark_http_offline_app,
                         mod_spark_http_offline_config,
                         mod_spark_http_offline_restclient,

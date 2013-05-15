@@ -21,7 +21,8 @@
 
 %% gen_server callbacks
 -export([
-    init/1,
+    init/1, 
+    start_link/2,
     handle_call/3,
     handle_cast/2,
     handle_info/2,
@@ -55,6 +56,8 @@
 	 thread}).
 
 -type message()::#message{}.
+
+-define(PROCNAME, ?MODULE).
 
 %TODO change it to false at end of cycle
 -define(TEST, true).
@@ -134,7 +137,7 @@ get_tag_from(Tag, Packet) ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([Host, _Opts]) ->
-    ?INFO_MSG("starting mod_spark_http_offline", []),
+    ?INFO_MSG("Initializing mod_spark_http_offline ~n", []),
     inets:start(),
     ejabberd_hooks:add(offline_message_hook, Host, ?MODULE, create_message, 50), 
     Urls         = gen_mod:get_module_opt(global, ?MODULE, url, []),
@@ -143,13 +146,15 @@ init([Host, _Opts]) ->
     SanityTestSetting = gen_mod:get_module_opt(global, ?MODULE, sanity_test_setting, undefined),
 
     ?INFO_MSG("started mod_spark_http_offline", []),
-    {ok, #state{
+    State = {ok, #state{
 	 	host = Host, 
 		urls = Urls,
 		client_settings = ClientSetting,
 		community2brandId  = Community2BrandId,
 		sanity_test_setting = SanityTestSetting
-    }}.
+    }},
+    ?INFO_MSG("Initialized mod_spark_http_offline ~n", []), 
+    State.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -233,7 +238,8 @@ code_change(_OldVsn, State, _Extra) ->
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start_link(Host, Opts) ->
-    Proc = gen_mod:get_module_proc(Host, ?MODULE),
+    ?INFO_MSG("start link mod_spark_http_offline", []),
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
     gen_server:start_link({local, Proc}, ?MODULE, [Host, Opts], []).
 
 
@@ -243,7 +249,8 @@ start_link(Host, Opts) ->
 
 
 start(Host, Opts) ->
-    Proc = gen_mod:get_module_proc(Host, ?MODULE),
+    ?INFO_MSG("Starting mod_spark_http_offline", []),
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
     ChildSpec =	{
         Proc,
 	    {?MODULE, start_link, [Host, Opts]},
@@ -251,12 +258,17 @@ start(Host, Opts) ->
 	    1000,
 	    worker,
 	    [?MODULE]},
-    supervisor:start_child(ejabberd_sup, ChildSpec).
+    Ret = supervisor:start_child(ejabberd_sup, ChildSpec),
+    ?INFO_MSG("Started mod_spark_http_offline ~p with status ~p~n", [Proc, Ret]),  
+    Ret.
     
 stop(Host) ->
-    Proc = gen_mod:get_module_proc(Host, ?MODULE),
+    ?INFO_MSG("Stopping mod_spark_http_offline", []),
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
     gen_server:call(Proc, stop),
-    supervisor:delete_child(ejabberd_sup, Proc).
+    Ret = supervisor:delete_child(ejabberd_sup, Proc),
+    ?INFO_MSG("Started mod_spark_http_offline ~p with status ~p~n", [Proc, Ret]), 
+    Ret.
 
 
 %%%%%% EUNIT %%%%%%%%%%%%%%%%%%
