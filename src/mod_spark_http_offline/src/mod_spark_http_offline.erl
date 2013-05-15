@@ -54,6 +54,7 @@
 	 body, 
 	 thread}).
 
+-type message()::#message{}.
 
 %TODO change it to false at end of cycle
 -define(TEST, true).
@@ -63,6 +64,7 @@
 -include_lib("kernel/include/file.hrl").
 -endif.
 
+-spec create_message(string(), string(), binary()) -> ok | {error, reason()}.
 create_message(From, To, Packet)->
 	case parse_message(From, To, Packet) of 
 	     ignore -> ok;
@@ -80,9 +82,10 @@ create_message(From, To, Packet)->
 post_offline_message(Event, Server, Message) ->
     Proc = gen_mod:get_module_proc(Server, ?MODULE),    
     gen_server:call(Proc, {post_to_restapi, Event, Message}).
-post_offline_message(Event, User, Server, Resource, Message) ->
-    Proc = gen_mod:get_module_proc(Server, ?MODULE),
-    gen_server:call(Proc, {post_to_restapi, Event, User, Server, Resource, Message}).
+
+%%post_offline_message(Event, User, Server, Resource, Message) ->
+%%    Proc = gen_mod:get_module_proc(Server, ?MODULE),
+%%    gen_server:call(Proc, {post_to_restapi, Event, User, Server, Resource, Message}).
 
 
 parse_message(From, To, {xmlelement, "message", _, _} = Packet) ->
@@ -108,7 +111,7 @@ getRecipientId(Message) ->
 
 getAccessToken(Message) ->
    SenderId = getSenderId(Message),
-   
+   %%%%%% TODO where to get the access token ?????
    AccessToken = message,
    AccessToken.
 
@@ -168,7 +171,8 @@ handle_call({post_to_restapi, message_hook, Message}, _From, State, Timeout) ->
 
 handle_call({post_to_restapi, message_hook, Message}, _From, State) ->
     Timeout = mod_spark_http_offline_config:getRestClientTimeout(State),
-    {reply, ok, State, Timeout};
+    %% TODO is following okay?
+    handle_call({post_to_restapi, message_hook, Message}, _From, State, Timeout);
 
 handle_call(stop, _From, State) ->
     {stop, normal, ok, State}.

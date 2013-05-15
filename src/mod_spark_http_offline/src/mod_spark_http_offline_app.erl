@@ -14,9 +14,6 @@
 %% Application callbacks
 -export([start/2, stop/1]).
 
-%% type 
--type configKV() :: { atom(), term()}.
-
 
 %% ===================================================================
 %% Application callbacks

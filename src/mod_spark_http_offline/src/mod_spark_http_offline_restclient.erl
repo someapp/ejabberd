@@ -26,7 +26,10 @@
 -endif.
 
 -export([post_to_restapi_message/5]).
-
+%% @doc
+%% Construct the service endpoint and the post message to call send missed IM rest api
+%% @end
+-spec post_to_restapi_message(memberId(),memberId(),access_token(), exml:xmlText(), configSetting()) -> ok | {error, reason()}.
 post_to_restapi_message(SenderId, RecipientId, AccessToken, Body, State) ->
 		?INFO_MSG("Posting From ~p To ~p Body ~p~n",[SenderId, RecipientId, Body]),
 		BrandId = mod_spark_http_offline_config:getBrandId(SenderId, State),			
