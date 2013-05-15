@@ -2,7 +2,7 @@
 -type method()::head | get | put | post | trace | options | delete.
 -type user()::string().
 -type url()::string().
--type accessToken()::string().
+-type access_token()::string().
 -type reason()::term().
 -type result()::tuple().
 -type reply()::{ok, result()} | {error, reason()}.
@@ -20,3 +20,19 @@
 	 community2brandId, 
 	 sanity_test_setting
 	}).
+
+-type configSetting() :: #state{}.
+
+-export_type([
+	host/0,
+	method/0,
+	user/0,
+	url/0,
+	access_token/0,
+	reason/0,
+	result/0,
+	reply/0,
+	configKey/0,
+	configValue/0,
+	configSetting/0
+	]).
