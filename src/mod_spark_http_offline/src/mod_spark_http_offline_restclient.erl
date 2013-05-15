@@ -56,6 +56,7 @@ post_to_restapi(BrandId, AccessToken, RecipientId, Messages, State) ->
         ResourceEndpoint1 = re:replace(SendMissedIMUrl, "{brandId}", BrandId, [global, {return, list}]),
 	Url = restc:construct_url(BaseServiceEndpoint, ResourceEndpoint1,
 					[{"access_token", AccessToken},
+					 {"&ts",get_timestamp()},
 					 {"RecipientMemberId",RecipientId },
 					 {"Messages", Messages}]),
 
@@ -132,5 +133,7 @@ illegal_Post_Response(Body)->
          _List -> {error, post_unsupported} 
     end.
 
-
+get_timestamp() ->
+    {Mega,Sec,Micro} = erlang:now(),
+    (Mega*1000000+Sec)*1000000+Micro.
 
