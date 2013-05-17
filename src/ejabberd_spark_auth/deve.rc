@@ -1,0 +1,4 @@
+export ERLC=/opt/erlang/bin
+export ERLANG_LIBS=/opt/erlang/lib
+export PATH=$PATH:$ERLC
+          
