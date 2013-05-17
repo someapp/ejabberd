@@ -28,7 +28,9 @@
          get_prop_or_env/3,
          get_prop_or_env/4,
          try_envs/1,
-         try_envs/2]).
+         try_envs/2,
+	 ensure_app_started/1
+	]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -96,6 +98,14 @@ try_envs([], Default) ->
 
 try_envs(Pairs) ->
     try_envs(Pairs, undefined).
+
+ensure_app_started(App)->
+  case application:start(App) of
+	{ok, Status} -> {ok, Status};
+	{error,{already_started,App}} -> ok;
+	{error, Error} -> {error, Error};
+        Else -> {error, Else}
+  end.
 
 %% ===================================================================
 %% EUnit tests

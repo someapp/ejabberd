@@ -14,8 +14,6 @@
 
 -author("etsang").
 
-%% Every ejabberd module implements the gen_mod behavior
-%% The gen_mod behavior requires two functions: start/2 and stop/1
 -behavirou(gen_server).
 -behaviour(gen_mod).
 
@@ -36,7 +34,7 @@
 	stop/1
 	]). 
 
-%% Module 
+%% Module export 
 -export([
 	create_message/3
 	]).
@@ -76,8 +74,8 @@ create_message(From, To, Packet)->
 				ok;
 
 	     Message ->
-                     Message1 = Message#message{attempt = 0},
-		     post_offline_message(message_hook, From#jid.server, Message1), 
+                
+		     post_offline_message(offline_message, From#jid.server, Message#message{attempt = 0}), 
 		     ok
 	end.
 
@@ -108,19 +106,21 @@ parse_message(From, To, {xmlelement, "message", _, _} = Packet) ->
 	"chat" ->   Subject = get_tag_from("subject", Packet),
     		    Body    = get_tag_from("body", Packet),
 		    Thread  = get_tag_from("thread", Packet),
-		    #message{from = jlib:jid_to_string(From), to = jlib:jid_to_string(To), type = Type, subject = Subject, body = Body, thread = Thread};
+		    #message{from = jid_to_string(From), to = jid_to_string(To), type = Type, subject = Subject, body = Body, thread = Thread};
 	_ -> ignore 
    end;
-parse_message(_From, _To, _) -> ignore.
 
+parse_message(_From, _To, _) -> 
+   ignore.
+
+jid_to_string(Jid) ->
+   jlib:jid_to_string(Jid).
 
 getSenderId(Message) ->
-   SenderId = Message#message.from,
-   SenderId.
+   Message#message.from.
 
 getRecipientId(Message) ->
-   RecipientId = Message#message.to,
-   RecipientId.
+   Message#message.to.
 
 getAccessToken(Message) ->
    SenderId = getSenderId(Message),
@@ -154,7 +154,7 @@ isExceedRetryAttempt(Attempt, MaxRetry) when is_integer(Attempt)->
 %%--------------------------------------------------------------------
 init([Host, _Opts]) ->
     ?INFO_MSG("Initializing mod_spark_http_offline ~n", []),
-    inets:start(),
+    app_helper:ensure_app_started(inets),
     ejabberd_hooks:add(offline_message_hook, Host, ?MODULE, create_message, 50), 
 
     Urls         = gen_mod:get_module_opt(global, ?MODULE, url, []),
@@ -184,6 +184,7 @@ init([Host, _Opts]) ->
 %%--------------------------------------------------------------------
 
 handle_call({post_to_restapi, offline_message, Message}, _From, State, Timeout) ->
+    ?DEBUG("{post_to_restapi, offline_message, Message}, _From, State ~p Timeout ~p~n",[State, Timeout]),
     SenderId = getSenderId(Message),
     RecipientId = getRecipientId(Message),
     AccessToken = getAccessToken(Message),
@@ -192,7 +193,7 @@ handle_call({post_to_restapi, offline_message, Message}, _From, State, Timeout) 
                false -> 
 			Attempt1 = Message#message.attempt +1,
     			Message2 = Message#message{attempt=Attempt1},
-                        post_to_restapi_message:post_to_restapi_message(SenderId, RecipientId, AccessToken, Message2, State),
+                        mod_spark_http_offline_restclient:post_to_restapi_message(SenderId, RecipientId, AccessToken, Message2, State),
     		        {reply, ok, State, Timeout};
                true ->  ?INFO_MSG("post_to_api Message ~p is ~p~n",[Message,expired]),
 		        {reply, ok, State, Timeout}
@@ -204,6 +205,7 @@ handle_call({post_to_restapi, UnsupportedEvent, Message}, _From, State, Timeout)
     {reply, ok, State, Timeout}.
 
 handle_call({post_to_restapi, offline_message, Message}, _From, State) ->
+    ?DEBUG("{post_to_restapi, offline_message, Message}, _From, State ~p~n",[State]),
     Timeout = mod_spark_http_offline_config:getRestClientTimeout(State),
     %% TODO is following okay?
     handle_call({post_to_restapi, message_hook, Message}, _From, State, Timeout);
