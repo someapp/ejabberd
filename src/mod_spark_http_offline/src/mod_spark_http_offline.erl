@@ -53,7 +53,8 @@
 	 type, 
 	 subject, 
 	 body, 
-	 thread}).
+	 thread,
+	 attempt}).
 
 -type message()::#message{}.
 
@@ -75,7 +76,8 @@ create_message(From, To, Packet)->
 				ok;
 
 	     Message ->
-		     post_offline_message(message_hook, From#jid.server, Message), 
+                     Message1 = Message#message{attempt = 0},
+		     post_offline_message(message_hook, From#jid.server, Message1), 
 		     ok
 	end.
 
@@ -83,13 +85,21 @@ create_message(From, To, Packet)->
 %% Internal functions
 %%====================================================================
 post_offline_message(Event, Server, Message) ->
-    Proc = gen_mod:get_module_proc(Server, ?MODULE),    
-    gen_server:call(Proc, {post_to_restapi, Event, Message}).
+    %%Proc = gen_mod:get_module_proc(Server, ?PROCNAME),  
+    ServerMsg = {post_to_restapi, Event, Message},
+    ?INFO_MSG("Posting to Procname: ~p Server: ~p on Event: ~p with Message: ~p~n", [?PROCNAME, Server, Event, ServerMsg]),
+    gen_server:call(?PROCNAME, {post_to_restapi, Event, Message}).
 
 %%post_offline_message(Event, User, Server, Resource, Message) ->
-%%    Proc = gen_mod:get_module_proc(Server, ?MODULE),
-%%    gen_server:call(Proc, {post_to_restapi, Event, User, Server, Resource, Message}).
+%%    Proc = gen_mod:get_module_proc(Server, ?PROCNAME),
+%%    gen_server:call(?PROCNAME, {post_to_restapi, Event, User, Server, Resource, Message}).
 
+
+post_to_restapi(Event, Server, Message) ->
+    %%Proc = gen_mod:get_module_proc(Server, ?PROCNAME),  
+    ServerMsg = {post_to_restapi, Event, Message},
+    ?INFO_MSG("Posting to ~p with Message ~p~n", [Server, ServerMsg]),
+    gen_server:call(?PROCNAME, {post_to_restapi, Event, Message}).
 
 parse_message(From, To, {xmlelement, "message", _, _} = Packet) ->
     %IsJustOffLine = checkTargetMemberStatus(),
@@ -126,6 +136,12 @@ get_tag_from(Tag, Packet) ->
             xml:get_tag_cdata(Xml)
     end.
 
+isExceedRetryAttempt(Attempt, MaxRetry) when is_integer(Attempt)->
+   case Attempt >= MaxRetry of
+ 	true -> true;
+        false -> false
+   end.
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -140,12 +156,13 @@ init([Host, _Opts]) ->
     ?INFO_MSG("Initializing mod_spark_http_offline ~n", []),
     inets:start(),
     ejabberd_hooks:add(offline_message_hook, Host, ?MODULE, create_message, 50), 
+
     Urls         = gen_mod:get_module_opt(global, ?MODULE, url, []),
     ClientSetting = gen_mod:get_module_opt(global, ?MODULE, client_settings, undefined),
     Community2BrandId = gen_mod:get_module_opt(global, ?MODULE, community2brandId, undefined),
     SanityTestSetting = gen_mod:get_module_opt(global, ?MODULE, sanity_test_setting, undefined),
 
-    ?INFO_MSG("started mod_spark_http_offline", []),
+    ?INFO_MSG("Started mod_spark_http_offline", []),
     State = {ok, #state{
 	 	host = Host, 
 		urls = Urls,
@@ -166,18 +183,34 @@ init([Host, _Opts]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 
-handle_call({post_to_restapi, message_hook, Message}, _From, State, Timeout) ->
+handle_call({post_to_restapi, offline_message, Message}, _From, State, Timeout) ->
     SenderId = getSenderId(Message),
     RecipientId = getRecipientId(Message),
     AccessToken = getAccessToken(Message),
+    RestClientRetryAttempt = mod_spark_http_offline_config:getRestClientTimeout(State),
+    Ret = case isExceedRetryAttempt(Message#message.attempt, RestClientRetryAttempt ) of
+               false -> 
+			Attempt1 = Message#message.attempt +1,
+    			Message2 = Message#message{attempt=Attempt1},
+                        post_to_restapi_message:post_to_restapi_message(SenderId, RecipientId, AccessToken, Message2, State),
+    		        {reply, ok, State, Timeout};
+               true ->  ?INFO_MSG("post_to_api Message ~p is ~p~n",[Message,expired]),
+		        {reply, ok, State, Timeout}
+	  end,
+    Ret;
 
-    post_to_restapi_message:post_to_restapi_message(SenderId, RecipientId, AccessToken, Message, State),
+handle_call({post_to_restapi, UnsupportedEvent, Message}, _From, State, Timeout) ->
+    ?WARNING_MSG("post_to_api Unsupported Event: ~p~n",[UnsupportedEvent]),
     {reply, ok, State, Timeout}.
 
-handle_call({post_to_restapi, message_hook, Message}, _From, State) ->
+handle_call({post_to_restapi, offline_message, Message}, _From, State) ->
     Timeout = mod_spark_http_offline_config:getRestClientTimeout(State),
     %% TODO is following okay?
     handle_call({post_to_restapi, message_hook, Message}, _From, State, Timeout);
+
+handle_call({post_to_restapi,UnsupportedEvent , Message}, _From, State) ->
+    ?WARNING_MSG("post_to_api Unsupported Event: ~p~n",[UnsupportedEvent]),
+    {reply, ok, State};
 
 handle_call(stop, _From, State) ->
     {stop, normal, ok, State}.
@@ -249,7 +282,7 @@ start_link(Host, Opts) ->
 
 
 start(Host, Opts) ->
-    ?INFO_MSG("Starting mod_spark_http_offline", []),
+    ?INFO_MSG("Starting mod_spark_http_offline at ~p~n", [?PROCNAME]),
     Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
     ChildSpec =	{
         Proc,
