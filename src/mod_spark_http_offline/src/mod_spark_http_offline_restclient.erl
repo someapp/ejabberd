@@ -140,3 +140,26 @@ get_timestamp() ->
     {Mega,Sec,Micro} = erlang:now(),
     (Mega*1000000+Sec)*1000000+Micro.
 
+-ifdef(TEST).
+mod_spark_http_offline_restclient_test_() ->
+    { setup,
+      fun setup/0,
+      fun cleanup/1,
+      [
+       fun spark_api_endpoint_test_case/0,
+       fun spark_oauth_access_token_test_case/0,
+       fun auth_profile_miniProfile_test_cas/0,
+       fun rabbitmq_endpoint_test_case/0,
+       fun rabbitmq_client_timeout_in_test_case/0,
+       fun rabbitmq_client_retry_attempt_in_test_case/0,
+       fun rest_client_timeout_in_sec_test_case/0,
+       fun rest_call_retry_attempt_test_case/0,
+       fun non_existent_var_test_case/0,
+       fun get_mod_spark_common_defaultValue_test_case/0,	
+       fun get_mod_spark_common_undefinedVal_test_case/0
+      ]
+    }.
+
+
+-endif.
+

@@ -72,11 +72,9 @@ create_message(From, To, Packet)->
 	     ignore -> ok;
 	     {error, Error} -> ?ERROR_MSG("Parse Message Failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, Error}]),
 				ok;
-
 	     Message ->
-                
-		     post_offline_message(offline_message, From#jid.server, Message#message{attempt = 0}), 
-		     ok
+             		post_offline_message(offline_message, From#jid.server, Message#message{attempt = 0}), 
+		     	ok
 	end.
 
 %%====================================================================
@@ -87,11 +85,6 @@ post_offline_message(Event, Server, Message) ->
     ServerMsg = {post_to_restapi, Event, Message},
     ?INFO_MSG("Posting to Procname: ~p Server: ~p on Event: ~p with Message: ~p~n", [?PROCNAME, Server, Event, ServerMsg]),
     gen_server:call(?PROCNAME, {post_to_restapi, Event, Message}).
-
-%%post_offline_message(Event, User, Server, Resource, Message) ->
-%%    Proc = gen_mod:get_module_proc(Server, ?PROCNAME),
-%%    gen_server:call(?PROCNAME, {post_to_restapi, Event, User, Server, Resource, Message}).
-
 
 post_to_restapi(Event, Server, Message) ->
     %%Proc = gen_mod:get_module_proc(Server, ?PROCNAME),  
@@ -183,6 +176,20 @@ init([Host, _Opts]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 
+
+handle_call({post_to_restapi, offline_message, Message}, _From, State) ->
+    ?DEBUG("{post_to_restapi, offline_message, Message}, _From, State ~p~n",[State]),
+    Timeout = mod_spark_http_offline_config:getRestClientTimeout(State),
+    %% TODO is following okay?
+    handle_call({post_to_restapi, message_hook, Message}, _From, State, Timeout);
+
+handle_call({post_to_restapi,UnsupportedEvent , Message}, _From, State) ->
+    ?WARNING_MSG("post_to_api Unsupported Event: ~p~n",[UnsupportedEvent]),
+    {reply, ok, State};
+
+handle_call(stop, _From, State) ->
+    {stop, normal, ok, State}.
+
 handle_call({post_to_restapi, offline_message, Message}, _From, State, Timeout) ->
     ?DEBUG("{post_to_restapi, offline_message, Message}, _From, State ~p Timeout ~p~n",[State, Timeout]),
     SenderId = getSenderId(Message),
@@ -203,19 +210,6 @@ handle_call({post_to_restapi, offline_message, Message}, _From, State, Timeout) 
 handle_call({post_to_restapi, UnsupportedEvent, Message}, _From, State, Timeout) ->
     ?WARNING_MSG("post_to_api Unsupported Event: ~p~n",[UnsupportedEvent]),
     {reply, ok, State, Timeout}.
-
-handle_call({post_to_restapi, offline_message, Message}, _From, State) ->
-    ?DEBUG("{post_to_restapi, offline_message, Message}, _From, State ~p~n",[State]),
-    Timeout = mod_spark_http_offline_config:getRestClientTimeout(State),
-    %% TODO is following okay?
-    handle_call({post_to_restapi, message_hook, Message}, _From, State, Timeout);
-
-handle_call({post_to_restapi,UnsupportedEvent , Message}, _From, State) ->
-    ?WARNING_MSG("post_to_api Unsupported Event: ~p~n",[UnsupportedEvent]),
-    {reply, ok, State};
-
-handle_call(stop, _From, State) ->
-    {stop, normal, ok, State}.
     
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -309,4 +303,19 @@ stop(Host) ->
 %%%%%% EUNIT %%%%%%%%%%%%%%%%%%
 -ifdef(TEST).
 
+
+mod_spark_http_offline_test_() ->
+    { setup,
+      fun setup/0,
+      fun cleanup/1,
+      [
+
+      ]
+    }.
+
+setup() ->   
+  ok.
+
+cleanup(_Pid) ->
+  ok.
 -endif.
