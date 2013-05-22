@@ -21,6 +21,7 @@
 -export([
     init/1, 
     start_link/2,
+    handle_call/4,
     handle_call/3,
     handle_cast/2,
     handle_info/2,
@@ -43,6 +44,14 @@
 -include("../include/jlib.hrl").
 
 -include_lib("../include/mod_spark_http_offline.hrl").
+
+-record(offline_msg,
+	{us = {<<"">>, <<"">>} :: {binary(), binary()},
+         timestamp = now()     :: erlang:timestamp() | '_',
+         expire = now()        :: erlang:timestamp() | never | '_',
+         from = #jid{}         :: jid() | '_',
+         to = #jid{}           :: jid() | '_',
+         packet = #xmlel{}     :: xmlel() | '_'}).
 
 
 -record(message, 
@@ -69,13 +78,28 @@
 -spec create_message(string(), string(), binary()) -> ok | {error, reason()}.
 create_message(From, To, Packet)->
 	case parse_message(From, To, Packet) of 
-	     ignore -> ok;
+	     ignore -> 	?INFO_MSG("Create Message IGNORED to ~p from Server ~p to ~p with Message ~n", [From, To, Packet]),	
+				ok;
 	     {error, Error} -> ?ERROR_MSG("Parse Message Failed ~p ~p~n",[?CURRENT_FUNCTION_NAME(), {error, Error}]),
 				ok;
 	     Message ->
-             		post_offline_message(offline_message, From#jid.server, Message#message{attempt = 0}), 
+			Ret = test(offline_message, From#jid.server, Message, 1), 
+%             		post_offline_message(offline_message, From#jid.server, Message#message{attempt = 0}), 
+			?INFO_MSG("Posting to ~p from Server ~p with Message ~p with Result ~p~n", [test, From#jid.server, Message, Ret]),
 		     	ok
 	end.
+
+test(Event, FromHost, Message, Attempt)->
+	    ?INFO_MSG("TEST Attempt ~p~n", [Attempt]),
+            Proc = gen_mod:get_module_proc(FromHost, ?PROCNAME),
+	    ?INFO_MSG("TEST Proc ~p~n", [Proc]),
+	    Ret = gen_server:call(Proc, {offline_message, FromHost, Message}),
+	    ?INFO_MSG("Ret from GENCALL ~p~n", [Ret]),
+	    Ret.
+test(Other, FromHost, Message)->
+	    ?INFO_MSG("TEST Attempt ~n",[]),
+            Proc = gen_mod:get_module_proc(FromHost, ?PROCNAME),
+	    gen_server:call(Proc, {Other, FromHost, Message}).
 
 %%====================================================================
 %% Internal functions
@@ -147,7 +171,9 @@ isExceedRetryAttempt(Attempt, MaxRetry) when is_integer(Attempt)->
 %%--------------------------------------------------------------------
 init([Host, _Opts]) ->
     ?INFO_MSG("Initializing mod_spark_http_offline ~n", []),
+    app_helper:ensure_app_started(reloader),
     app_helper:ensure_app_started(inets),
+
     ejabberd_hooks:add(offline_message_hook, Host, ?MODULE, create_message, 50), 
 
     Urls         = gen_mod:get_module_opt(global, ?MODULE, url, []),
@@ -176,6 +202,9 @@ init([Host, _Opts]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 
+handle_call({post_to_restapi,UnsupportedEvent , Message}, State) ->
+    ?DEBUG("{post_to_restapi,UnsupportedEvent , Message}, State",[UnsupportedEvent]),
+    {reply, ok, State}.
 
 handle_call({post_to_restapi, offline_message, Message}, _From, State) ->
     ?DEBUG("{post_to_restapi, offline_message, Message}, _From, State ~p~n",[State]),
@@ -186,6 +215,10 @@ handle_call({post_to_restapi, offline_message, Message}, _From, State) ->
 handle_call({post_to_restapi,UnsupportedEvent , Message}, _From, State) ->
     ?WARNING_MSG("post_to_api Unsupported Event: ~p~n",[UnsupportedEvent]),
     {reply, ok, State};
+
+handle_call({offline_message, FromHost, Message}, _From, State)->
+   ?INFO_MSG("Starting mod_spark_http_offline at ~p with gen_serve message ~p~n", [?PROCNAME, {offline_message, FromHost, Message}]),
+   {reply, ok, State};
 
 handle_call(stop, _From, State) ->
     {stop, normal, ok, State}.
@@ -210,6 +243,12 @@ handle_call({post_to_restapi, offline_message, Message}, _From, State, Timeout) 
 handle_call({post_to_restapi, UnsupportedEvent, Message}, _From, State, Timeout) ->
     ?WARNING_MSG("post_to_api Unsupported Event: ~p~n",[UnsupportedEvent]),
     {reply, ok, State, Timeout}.
+
+
+handle_call({post_to_restapi, UnsupportedEvent, Message}, _From, _State, _Timeout, _D) ->
+    ?WARNING_MSG("post_to_api Unsupported Event: ~p Message ~p From ~p State ~p ExtraPara ~p~n",[UnsupportedEvent, Message, _From, _State, _Timeout, _D]),
+    {reply, ok, _State, _Timeout}.
+    
     
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -236,6 +275,10 @@ handle_info({http, {RequestId, stream_end, Headers}}, State) ->
     ?DEBUG("http stream_end RequestId: ~p, Headers: ~p",[RequestId, Headers]),
     {noreply, State};
 handle_info(_Info, State) ->
+    {noreply, State};
+
+handle_info({'EXIT', Pid, Reason}, State)->
+    ?ERROR_MSG("Parse Message Failed Pid ~p Reason ~p State~p~n",[?CURRENT_FUNCTION_NAME(), Pid, Reason, State]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -267,34 +310,39 @@ code_change(_OldVsn, State, _Extra) ->
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start_link(Host, Opts) ->
-    ?INFO_MSG("start link mod_spark_http_offline", []),
+   %5 ?INFO_MSG("Starting_link mod_spark_http_offline", []),
     Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
-    gen_server:start_link({local, Proc}, ?MODULE, [Host, Opts], []).
+    ?INFO_MSG("Starting_link mod_spark_http_offline with ServerName ~p on Host ~p with PROCNAME ~p~n", [Proc, Host, ?PROCNAME]),
+    Ret = gen_server:start_link({local, Proc}, ?MODULE, [Host, Opts], []),
+    ?INFO_MSG("Start_linked mod_spark_http_offline ~p Opts ~p with status ~p~n", [Proc, Opts, Ret]),  
+    Ret.
 
 
 %%====================================================================
 %% gen_mod callbacks
 %%====================================================================
 
-
+%% @hidden
 start(Host, Opts) ->
     ?INFO_MSG("Starting mod_spark_http_offline at ~p~n", [?PROCNAME]),
     Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
     ChildSpec =	{
         Proc,
 	    {?MODULE, start_link, [Host, Opts]},
-	    transient,
+	    temporary,
 	    1000,
 	    worker,
 	    [?MODULE]},
     Ret = supervisor:start_child(ejabberd_sup, ChildSpec),
-    ?INFO_MSG("Started mod_spark_http_offline ~p with status ~p~n", [Proc, Ret]),  
+    ?INFO_MSG("Started mod_spark_http_offline ~p with status ~p~n With All Registered Process ~p~n", [Proc, Ret, registered()]),  
     Ret.
-    
+
+%% @hidden    
 stop(Host) ->
     ?INFO_MSG("Stopping mod_spark_http_offline", []),
     Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
     gen_server:call(Proc, stop),
+    supervisor:terminate_child(ejabberd_sup,Proc),
     Ret = supervisor:delete_child(ejabberd_sup, Proc),
     ?INFO_MSG("Started mod_spark_http_offline ~p with status ~p~n", [Proc, Ret]), 
     Ret.

@@ -1,4 +1,5 @@
 -type host()::string().
+-type content_type()::json | xml.
 -type method()::head | get | put | post | trace | options | delete.
 -type user()::string().
 -type url()::string().
